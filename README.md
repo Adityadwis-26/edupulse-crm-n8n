@@ -50,14 +50,14 @@ flowchart TD
         Router["Action & Routing Engine"]
         
         subgraph AI_Hub ["AI Agent & Intelligence Hub"]
-            Gemini["Google Gemini 2.5 Flash<br/>(Chat & Tool Models)"]
+            Gemini["Google Gemini 2.5 Flash<br/>Chat & Tool Models"]
             Memory["Buffer Window Memory"]
             Calculator["Calculator Tool"]
-            VectorStore["Exam Rubrics Vector Store<br/>(Gemini Embeddings)"]
+            VectorStore["Exam Rubrics Vector Store<br/>Gemini Embeddings"]
         end
 
         subgraph CRM_Storage ["n8n Database"]
-            CRM_DB[("Student_CRM_Database<br/>(Data Table)")]
+            CRM_DB[("Student_CRM_Database<br/>Data Table")]
         end
 
         Decider{"Check Pass or Remedial?"}
@@ -66,16 +66,18 @@ flowchart TD
         Responder["Respond to Webhook (JSON)"]
     end
 
-    UI -->|sync_to_crm / fetch_crm| Webhook
+    UI -->|sync_to_crm or fetch_crm| Webhook
     Copilot -->|action: ai_chat| Webhook
     Webhook --> Dispatcher
     Webhook --> Router
     Router --> Gemini
     Router --> CRM_DB
     Gemini --> Decider
-    Decider -->|Passed (>=40%)| Merit --> Responder
-    Decider -->|Failed (<40%)| Remedial --> Responder
-    Responder -->|HTTP 200 JSON <0.34s| UI
+    Decider -->|Passed: 40% and above| Merit
+    Decider -->|Failed: Below 40%| Remedial
+    Merit --> Responder
+    Remedial --> Responder
+    Responder -->|HTTP 200 JSON Response| UI
     Responder -->|Live Activity Stream| Logger
 ```
 
