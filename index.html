@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduPulse CRM - Student Exam Management Dashboard</title>
+  <meta name="description" content="Modern Student Exam Management CRM Dashboard connected directly to automated n8n webhooks for real-time exam scheduling, grading, and performance tracking.">
+  
+  <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Top Navigation Bar -->
+    <header class="navbar" id="mainHeader">
+      <div class="nav-brand">
+        <div class="logo-icon">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">EduPulse <span class="badge-tag">CRM</span></div>
+          <div class="brand-sub">Student Exam Management & Automation</div>
+        </div>
+      </div>
+
+      <!-- CRM Database Status Pill -->
+      <div class="crm-connection-pill" id="crmConnectionPill" title="Connected to n8n Student CRM Database">
+        <i class="fa-solid fa-database"></i>
+        <span>CRM: <strong id="crmDbName">Student_CRM_Database</strong></span>
+        <span class="crm-status-dot connected" id="crmStatusDot"></span>
+      </div>
+
+      <!-- n8n Webhook Status Pill -->
+      <div class="webhook-banner" id="webhookBanner">
+        <div class="status-indicator">
+          <span class="status-dot pulsing" id="statusDot"></span>
+          <span class="status-text" id="statusText">Checking n8n...</span>
+        </div>
+        <div class="webhook-endpoint-info">
+          <i class="fa-solid fa-bolt"></i>
+          <span id="currentEndpointLabel">http://localhost:5678/webhook/student-exam</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="btnTestWebhook" title="Ping n8n Webhook">
+          <i class="fa-solid fa-rotate"></i> Ping n8n
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btnConfigWebhook" title="Webhook Settings">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn btn-secondary btn-sm" id="btnToggleConsole">
+          <i class="fa-solid fa-terminal"></i> <span class="hide-mobile">Webhook Console</span>
+          <span class="console-counter" id="consoleCounter">0</span>
+        </button>
+        <button class="btn btn-primary" id="btnOpenScheduleModal">
+          <i class="fa-solid fa-plus"></i> <span>Schedule Exam</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-container">
+      
+      <!-- Top KPI Row -->
+      <section class="kpi-grid" aria-label="Dashboard Overview Metrics">
+        <div class="kpi-card" id="kpiTotalExams">
+          <div class="kpi-header">
+            <span class="kpi-title">Total Exams</span>
+            <div class="kpi-icon icon-indigo">
+              <i class="fa-solid fa-book-open"></i>
+            </div>
+          </div>
+          <div class="kpi-value" id="valTotalExams">0</div>
+          <div class="kpi-footer">
+            <span class="kpi-badge badge-neutral" id="valScheduledCount">0 Scheduled</span>
+            <span class="kpi-subtext" id="valGradedCount">0 Graded</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="kpiAvgScore">
+          <div class="kpi-header">
+            <span class="kpi-title">Average Score</span>
+            <div class="kpi-icon icon-emerald">
+              <i class="fa-solid fa-chart-line"></i>
+            </div>
+          </div>
+          <div class="kpi-value" id="valAvgScore">0.0%</div>
+          <div class="kpi-progress">
+            <div class="kpi-progress-bar" id="barAvgScore" style="width: 0%"></div>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-subtext">Calculated by n8n engine</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="kpiPassRate">
+          <div class="kpi-header">
+            <span class="kpi-title">Pass Rate</span>
+            <div class="kpi-icon icon-amber">
+              <i class="fa-solid fa-award"></i>
+            </div>
+          </div>
+          <div class="kpi-value" id="valPassRate">0.0%</div>
+          <div class="kpi-progress">
+            <div class="kpi-progress-bar bg-amber" id="barPassRate" style="width: 0%"></div>
+          </div>
+          <div class="kpi-footer">
+            <span class="kpi-badge badge-success" id="valPassedCount">0 Passed</span>
+            <span class="kpi-subtext" id="valFailedCount">0 Failed</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" id="kpiTopPerformer">
+          <div class="kpi-header">
+            <span class="kpi-title">Top Performance</span>
+            <div class="kpi-icon icon-purple">
+              <i class="fa-solid fa-crown"></i>
+            </div>
+          </div>
+          <div class="kpi-value kpi-highlight" id="valTopStudent">-</div>
+          <div class="kpi-footer">
+            <span class="kpi-subtext" id="valTopScore">Awaiting results</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Action & Filter Bar -->
+      <section class="controls-panel">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input type="text" id="searchInput" placeholder="Search by student name, roll number, or exam title..." autocomplete="off">
+          <button class="clear-search" id="btnClearSearch" style="display: none;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="filter-group">
+          <!-- Subject Filter -->
+          <div class="select-wrapper">
+            <i class="fa-solid fa-shapes select-icon"></i>
+            <select id="subjectFilter" aria-label="Filter by Subject">
+              <option value="ALL">All Subjects</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Computer Science">Computer Science</option>
+              <option value="Biology">Biology</option>
+              <option value="English Literature">English Literature</option>
+            </select>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="select-wrapper">
+            <i class="fa-solid fa-filter select-icon"></i>
+            <select id="statusFilter" aria-label="Filter by Status">
+              <option value="ALL">All Statuses</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="Graded">Graded</option>
+              <option value="Passed">Passed</option>
+              <option value="Failed">Failed</option>
+            </select>
+          </div>
+
+          <!-- CRM Sync Actions -->
+          <button class="btn btn-emerald btn-sm" id="btnSyncFromCRM" title="Pull latest records from Student CRM Database">
+            <i class="fa-solid fa-cloud-arrow-down"></i> <span class="hide-tablet">Sync from CRM</span>
+          </button>
+          <button class="btn btn-outline btn-sm" id="btnPushToCRM" title="Push records to Student CRM Database">
+            <i class="fa-solid fa-cloud-arrow-up"></i> <span class="hide-tablet">Push to CRM</span>
+          </button>
+
+          <!-- Quick Seed / Reset -->
+          <button class="btn btn-ghost btn-sm" id="btnSeedData" title="Load demo sample exams">
+            <i class="fa-solid fa-database"></i> <span class="hide-tablet">Reset Demo</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Dashboard Table Card -->
+      <section class="table-container-card">
+        <div class="table-header-bar">
+          <div class="table-title">
+            <h1 class="heading-title">Student Exam Management</h1>
+            <span class="count-pill" id="tableItemCount">0 records</span>
+          </div>
+
+          <div class="view-toggles">
+            <button class="view-btn active" id="btnViewTable" title="Table View">
+              <i class="fa-solid fa-list"></i>
+            </button>
+            <button class="view-btn" id="btnViewGrid" title="Card Grid View">
+              <i class="fa-solid fa-grip"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Data Table View -->
+        <div class="table-responsive" id="tableView">
+          <table class="exam-table" id="examTable">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Subject & Exam</th>
+                <th>Date</th>
+                <th>Score & Progress</th>
+                <th>Grade</th>
+                <th>Status</th>
+                <th>CRM Sync</th>
+                <th>AI Remarks</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="examTableBody">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Card Grid View (Hidden by default) -->
+        <div class="grid-responsive" id="gridView" style="display: none;">
+          <div class="exam-cards-grid" id="examCardsGrid">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+          <div class="empty-icon">
+            <i class="fa-solid fa-clipboard-question"></i>
+          </div>
+          <h3>No Exam Records Found</h3>
+          <p>No exams match your current search or filter criteria. Try resetting filters or schedule a new exam.</p>
+          <button class="btn btn-primary" id="btnEmptySchedule">
+            <i class="fa-solid fa-plus"></i> Schedule First Exam
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Slide-over Webhook Live Activity Console -->
+    <aside class="console-drawer" id="consoleDrawer">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <i class="fa-solid fa-terminal"></i>
+          <span>n8n Webhook Live Activity</span>
+        </div>
+        <div class="drawer-actions">
+          <button class="btn-icon" id="btnClearLogs" title="Clear Console">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+          <button class="btn-icon" id="btnCloseDrawer" title="Close Drawer">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      
+      <div class="drawer-info-bar">
+        <span>Target Webhook:</span>
+        <code id="drawerEndpointLabel">POST /webhook/student-exam</code>
+      </div>
+
+      <div class="drawer-logs" id="consoleLogs">
+        <div class="log-placeholder">
+          <i class="fa-solid fa-network-wired"></i>
+          <p>Awaiting webhook activity. Send a ping or schedule an exam to inspect live request & response streams.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Modal: Schedule Exam -->
+    <div class="modal-backdrop" id="modalSchedule">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-icon-badge">
+              <i class="fa-solid fa-calendar-plus"></i>
+            </div>
+            <div>
+              <h3>Schedule New Exam</h3>
+              <p>Creates an exam schedule and synchronizes directly via n8n Webhook</p>
+            </div>
+          </div>
+          <button class="btn-icon close-modal" data-close="modalSchedule">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form id="formScheduleExam" class="modal-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="inputStudentName">Student Full Name <span class="required">*</span></label>
+              <input type="text" id="inputStudentName" placeholder="e.g. Maya Lin" required>
+            </div>
+
+            <div class="form-group">
+              <label for="inputStudentId">Student ID / Roll No <span class="required">*</span></label>
+              <input type="text" id="inputStudentId" placeholder="e.g. STU-204" required>
+            </div>
+
+            <div class="form-group">
+              <label for="inputSubject">Subject <span class="required">*</span></label>
+              <select id="inputSubject" required>
+                <option value="Mathematics">Mathematics</option>
+                <option value="Physics">Physics</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Biology">Biology</option>
+                <option value="English Literature">English Literature</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="inputExamTitle">Exam Title <span class="required">*</span></label>
+              <input type="text" id="inputExamTitle" placeholder="e.g. Midterm Comprehensive" required>
+            </div>
+
+            <div class="form-group">
+              <label for="inputExamDate">Exam Date <span class="required">*</span></label>
+              <input type="date" id="inputExamDate" required>
+            </div>
+
+            <div class="form-group">
+              <label for="inputTotalMarks">Total Marks <span class="required">*</span></label>
+              <input type="number" id="inputTotalMarks" min="10" max="1000" value="100" required>
+            </div>
+
+            <div class="form-group">
+              <label for="inputPassingMarks">Passing Marks <span class="required">*</span></label>
+              <input type="number" id="inputPassingMarks" min="5" max="500" value="40" required>
+            </div>
+
+            <div class="form-group">
+              <label for="inputInitialMarks">Marks Obtained (Optional)</label>
+              <input type="number" id="inputInitialMarks" min="0" max="1000" placeholder="Leave empty if upcoming">
+              <span class="field-hint">If entered, n8n will immediately grade the exam</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="inputFeedback">Exam Notes / Instructions</label>
+            <input type="text" id="inputFeedback" placeholder="e.g. Closed-book written exam in Room 302">
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-modal" data-close="modalSchedule">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnSubmitSchedule">
+              <i class="fa-solid fa-paper-plane"></i> Submit via n8n Webhook
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Enter Marks / Grade Exam -->
+    <div class="modal-backdrop" id="modalGrade">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-icon-badge icon-emerald">
+              <i class="fa-solid fa-pen-ruler"></i>
+            </div>
+            <div>
+              <h3>Evaluate & Grade Exam</h3>
+              <p>Calculate grades, percentage, and feedback through n8n workflow</p>
+            </div>
+          </div>
+          <button class="btn-icon close-modal" data-close="modalGrade">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form id="formGradeExam" class="modal-form">
+          <input type="hidden" id="gradeExamId">
+          <input type="hidden" id="gradeStudentId">
+
+          <!-- Exam details summary -->
+          <div class="exam-grade-meta">
+            <div class="meta-item">
+              <span class="meta-label">Student:</span>
+              <strong id="gradeDisplayStudent">-</strong>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Subject & Exam:</span>
+              <strong id="gradeDisplayExam">-</strong>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Max Marks:</span>
+              <strong id="gradeDisplayTotal">100</strong>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Passing Threshold:</span>
+              <strong id="gradeDisplayPassing">40</strong>
+            </div>
+          </div>
+
+          <div class="grade-input-box">
+            <div class="form-group">
+              <label for="inputGradeMarks">Marks Obtained <span class="required">*</span></label>
+              <input type="number" id="inputGradeMarks" min="0" max="1000" step="0.5" placeholder="e.g. 85" required>
+            </div>
+
+            <!-- Live Calculation Preview -->
+            <div class="live-grade-preview">
+              <div class="preview-item">
+                <span class="preview-label">Percentage:</span>
+                <span class="preview-val" id="previewPercentage">--%</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Calculated Grade:</span>
+                <span class="preview-badge" id="previewGradeBadge">--</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Result:</span>
+                <span class="preview-status" id="previewStatus">--</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="inputGradeRemarks">Teacher Feedback / Custom Remarks</label>
+            <input type="text" id="inputGradeRemarks" placeholder="Leave empty to let n8n assign smart feedback">
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-modal" data-close="modalGrade">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnSubmitGrade">
+              <i class="fa-solid fa-check"></i> Evaluate via n8n
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal: Student Report Card -->
+    <div class="modal-backdrop" id="modalReport">
+      <div class="modal-card report-modal">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-icon-badge icon-purple">
+              <i class="fa-solid fa-file-invoice"></i>
+            </div>
+            <div>
+              <h3>Official Exam Report Card</h3>
+              <p>Verified performance report synchronized with n8n workflow</p>
+            </div>
+          </div>
+          <button class="btn-icon close-modal" data-close="modalReport">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="report-body" id="reportBody">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal" data-close="modalReport">Close</button>
+          <button type="button" class="btn btn-primary" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Print Report
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Webhook Configuration -->
+    <div class="modal-backdrop" id="modalConfig">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-icon-badge icon-indigo">
+              <i class="fa-solid fa-network-wired"></i>
+            </div>
+            <div>
+              <h3>Webhook Connection Settings</h3>
+              <p>Configure and verify connection to your n8n workflow</p>
+            </div>
+          </div>
+          <button class="btn-icon close-modal" data-close="modalConfig">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form id="formConfigWebhook" class="modal-form">
+          <div class="form-group">
+            <label for="cfgWebhookUrl">n8n Webhook URL</label>
+            <input type="url" id="cfgWebhookUrl" value="http://localhost:5678/webhook/student-exam" required>
+            <span class="field-hint">Default production webhook: <code>http://localhost:5678/webhook/student-exam</code></span>
+          </div>
+
+          <div class="webhook-presets">
+            <span class="preset-label">Quick Presets:</span>
+            <button type="button" class="btn-chip" data-preset="http://localhost:5678/webhook/student-exam">
+              Production Webhook
+            </button>
+            <button type="button" class="btn-chip" data-preset="http://localhost:5678/webhook-test/student-exam">
+              Test Webhook (Editor Mode)
+            </button>
+          </div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="cfgGeminiKey">Google Gemini API Key (Optional)</label>
+            <input type="password" id="cfgGeminiKey" placeholder="AIzaSy..." autocomplete="off">
+            <span class="field-hint">Optional API key for Google AI Studio / Gemini API. High-speed Gemini 2.5 Flash pipeline active by default.</span>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary close-modal" data-close="modalConfig">Close</button>
+            <button type="button" class="btn btn-outline" id="btnTestConfigUrl">
+              <i class="fa-solid fa-rotate"></i> Test Ping
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-floppy-disk"></i> Save Settings
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Floating AI CRM Copilot FAB & Drawer -->
+    <button class="ai-copilot-fab" id="btnOpenCopilot" title="Open Google Gemini CRM Copilot">
+      <div class="fab-sparkle"><i class="fa-solid fa-bolt" style="color: #1e1b4b;"></i></div>
+      <i class="fa-solid fa-wand-magic-sparkles"></i>
+      <span class="fab-text">Gemini AI Copilot</span>
+    </button>
+
+    <div class="ai-copilot-drawer" id="copilotDrawer">
+      <div class="copilot-header">
+        <div class="copilot-title">
+          <div class="copilot-icon" style="background: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #db2777 100%);"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          <div>
+            <h4>Google Gemini 2.5 AI</h4>
+            <span class="copilot-subtitle"><i class="fa-solid fa-bolt" style="color: #60a5fa;"></i> Ultra-Fast (&lt;0.3s) • Gemini 2.5 Flash</span>
+          </div>
+        </div>
+        <button class="btn-icon" id="btnCloseCopilot"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <div class="copilot-chat" id="copilotChat">
+        <div class="chat-message bot">
+          <div class="msg-avatar" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+          <div class="msg-bubble">
+            Hello! I am your <strong>Google Gemini 2.5 Flash AI Copilot</strong>, delivering ultra-fast (&lt;0.3s) pedagogical evaluation connected directly to <code>Student_CRM_Database</code>. Ask me about student grades, failing students, or remedial recommendations!
+          </div>
+        </div>
+      </div>
+
+      <form id="formCopilotChat" class="copilot-input-form">
+        <input type="text" id="copilotInput" placeholder="Ask Google Gemini (e.g. 'Who needs remedial help?')..." autocomplete="off" required>
+        <button type="submit" class="btn btn-primary btn-sm" id="btnSendCopilot">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

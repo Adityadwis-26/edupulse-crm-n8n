@@ -1,0 +1,137 @@
+{
+  "id": "xrasbPObBlriGu8Y",
+  "name": "Student Exam Management Webhook Workflow",
+  "active": false,
+  "isArchived": false,
+  "versionId": "18b528ca-7b65-4e73-88e9-6f1b045e839c",
+  "activeVersionId": null,
+  "triggerCount": 1,
+  "createdAt": "2026-09-11T06:00:14.286Z",
+  "updatedAt": "2026-09-11T06:00:14.286Z",
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "connections": {
+    "Student Exam Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Exam Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Exam Action": {
+      "main": [
+        [
+          {
+            "node": "Respond to Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "id": "5b72fd76-002c-465f-b0ba-8392d9a7d6df",
+      "name": "Student Exam Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "student-exam",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "e5575f6b-a058-4641-bb47-f0b9e1b714fd"
+    },
+    {
+      "id": "7abc5687-06dc-4aef-883c-1da4261cd317",
+      "name": "Process Exam Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "\nconst body = $input.all()[0].json.body || {};\nconst action = body.action || 'ping';\n\nlet response = {\n  success: true,\n  action: action,\n  timestamp: new Date().toISOString()\n};\n\nif (action === 'create_exam') {\n  const total = Number(body.totalMarks) || 100;\n  const passing = Number(body.passingMarks) || 40;\n  const obtained = (body.marksObtained !== undefined && body.marksObtained !== '' && body.marksObtained !== null) \n    ? Number(body.marksObtained) : null;\n  \n  let grade = null;\n  let percentage = null;\n  let passed = null;\n\n  if (obtained !== null) {\n    percentage = Math.round((obtained / total) * 100 * 10) / 10;\n    passed = obtained >= passing;\n    if (percentage >= 90) grade = 'A+';\n    else if (percentage >= 80) grade = 'A';\n    else if (percentage >= 70) grade = 'B';\n    else if (percentage >= 60) grade = 'C';\n    else if (percentage >= 50) grade = 'D';\n    else grade = 'F';\n  }\n\n  const exam = {\n    id: body.id || ('EX-' + Math.floor(1000 + Math.random() * 9000)),\n    studentId: body.studentId || 'STU-001',\n    studentName: body.studentName || 'Student Name',\n    subject: body.subject || 'General Studies',\n    examTitle: body.examTitle || 'Midterm Assessment',\n    examDate: body.examDate || new Date().toISOString().split('T')[0],\n    totalMarks: total,\n    passingMarks: passing,\n    marksObtained: obtained,\n    percentage: percentage,\n    grade: grade,\n    passed: passed,\n    status: obtained !== null ? 'Graded' : (body.status || 'Scheduled'),\n    feedback: body.feedback || (obtained !== null ? (passed ? 'Cleared successfully' : 'Needs improvement') : 'Pending exam date')\n  };\n\n  response.data = exam;\n  response.message = 'Exam scheduled/recorded successfully in n8n';\n} else if (action === 'record_score') {\n  const total = Number(body.totalMarks) || 100;\n  const passing = Number(body.passingMarks) || 40;\n  const obtained = Number(body.marksObtained) || 0;\n  const percentage = Math.round((obtained / total) * 100 * 10) / 10;\n  const passed = obtained >= passing;\n  \n  let grade = 'F';\n  if (percentage >= 90) grade = 'A+';\n  else if (percentage >= 80) grade = 'A';\n  else if (percentage >= 70) grade = 'B';\n  else if (percentage >= 60) grade = 'C';\n  else if (percentage >= 50) grade = 'D';\n\n  response.data = {\n    id: body.id,\n    studentId: body.studentId,\n    marksObtained: obtained,\n    totalMarks: total,\n    percentage: percentage,\n    grade: grade,\n    passed: passed,\n    status: 'Graded',\n    feedback: body.feedback || (passed ? 'Passed with satisfactory performance' : 'Remedial assessment suggested'),\n    updatedAt: new Date().toISOString()\n  };\n  response.message = 'Score calculated and grade assigned by n8n workflow';\n} else if (action === 'get_summary') {\n  response.data = {\n    status: 'online',\n    workflowName: 'Student Exam Management CRM Pipeline',\n    version: '1.0.0',\n    capabilities: ['create_exam', 'record_score', 'bulk_sync', 'analytics']\n  };\n  response.message = 'Workflow connection active and operational';\n} else {\n  response.message = 'Action ' + action + ' received and processed successfully';\n  response.data = body;\n}\n\nreturn [{ json: { response } }];\n"
+      }
+    },
+    {
+      "id": "a12d8d74-d0de-46ae-ba5c-ff34940bd24b",
+      "name": "Respond to Dashboard",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.response }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Authorization"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "nodeGroups": [],
+  "activeVersion": null,
+  "tags": [],
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "parentFolderId": null,
+  "description": "Direct webhook workflow for Student Exam Management Dashboard to record exams and auto-calculate grades.",
+  "scopes": [
+    "execution:reveal",
+    "workflow:create",
+    "workflow:delete",
+    "workflow:disableRedaction",
+    "workflow:enableRedaction",
+    "workflow:execute",
+    "workflow:execute-chat",
+    "workflow:export",
+    "workflow:import",
+    "workflow:list",
+    "workflow:move",
+    "workflow:publish",
+    "workflow:read",
+    "workflow:share",
+    "workflow:unpublish",
+    "workflow:unshare",
+    "workflow:update"
+  ],
+  "canExecute": true
+}

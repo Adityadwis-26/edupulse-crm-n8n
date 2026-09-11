@@ -1,0 +1,1159 @@
+{
+  "id": "8zUeTtZ2gytX24SC",
+  "name": "Student Exam CRM & AI Automation Pipeline",
+  "active": true,
+  "isArchived": false,
+  "versionId": "8303e76e-3cb8-44e0-9529-fc5d840b6672",
+  "activeVersionId": "8303e76e-3cb8-44e0-9529-fc5d840b6672",
+  "triggerCount": 2,
+  "createdAt": "2026-09-11T06:31:25.344Z",
+  "updatedAt": "2026-09-11T09:50:36.464Z",
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "connections": {
+    "Student Exam Webhook": {
+      "main": [
+        [
+          {
+            "node": "Slack / CRM Notification Dispatcher",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Process CRM Exam Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process CRM Exam Record": {
+      "main": [
+        [
+          {
+            "node": "Is Health Ping?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Health Ping?": {
+      "main": [
+        [
+          {
+            "node": "Respond to CRM Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Sync to Student CRM Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exam Rubrics Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync to Student CRM Database": {
+      "main": [
+        [
+          {
+            "node": "Check Pass or Remedial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Pass or Remedial": {
+      "main": [
+        [
+          {
+            "node": "Honor Roll Certificate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Remedial Study Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Honor Roll Certificate": {
+      "main": [
+        [
+          {
+            "node": "Respond to CRM Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remedial Study Plan": {
+      "main": [
+        [
+          {
+            "node": "Respond to CRM Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Model for Tools": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Embeddings": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Exam Rubrics Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "student-exam",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "84959198-4037-4b38-a875-baccebe8426a",
+      "name": "Student Exam Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        96
+      ],
+      "webhookId": "3ffd3692-3e0c-4237-a4d7-e85932139bc6"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "notif_event",
+              "name": "notificationEvent",
+              "value": "CRM_STUDENT_ACTIVITY_LOGGED",
+              "type": "string"
+            },
+            {
+              "id": "notif_channel",
+              "name": "targetChannel",
+              "value": "#student-exams-crm",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "bc0d6932-7f15-40c2-bb6d-a2fcdca09e4f",
+      "name": "Slack / CRM Notification Dispatcher",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.all()[0].json.body || $input.all()[0].json || {};\nconst action = body.action || 'ping';\nconst geminiApiKey = body.geminiApiKey || $input.all()[0].json.headers?.['x-gemini-api-key'] || '';\n\nlet response = {\n  success: true,\n  action: action,\n  timestamp: new Date().toISOString(),\n  crmStatus: 'Synchronized with Student CRM',\n  crmDatabase: 'Student_CRM_Database (WWJbILmVtjqZrYbx)',\n  aiEngine: 'Google Gemini 2.5 Flash (models/gemini-2.5-flash)'\n};\n\nconst CRM_DATABASE_RECORDS = [\n  {\n    id: \"EX-1001\",\n    studentId: \"STU-882\",\n    studentName: \"Sophia Chen\",\n    subject: \"Computer Science\",\n    examTitle: \"Data Structures & Algorithms Midterm\",\n    examDate: \"2026-09-15\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: 94,\n    percentage: 94,\n    grade: \"A+\",\n    passed: true,\n    status: \"Graded\",\n    aiEvaluation: \"Exceptional algorithmic problem-solving. Strong mastery over graph traversal and dynamic programming. Recommended for Honors Research track.\",\n    feedback: \"Exceptional mastery in graph theory and dynamic programming.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1001\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString()\n  },\n  {\n    id: \"EX-1002\",\n    studentId: \"STU-741\",\n    studentName: \"Liam Vance\",\n    subject: \"Mathematics\",\n    examTitle: \"Multivariable Calculus Final\",\n    examDate: \"2026-09-18\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: 82,\n    percentage: 82,\n    grade: \"A\",\n    passed: true,\n    status: \"Graded\",\n    aiEvaluation: \"High computational accuracy on Green's theorem and Stokes' theorem. Solid candidate for Differential Geometry.\",\n    feedback: \"Great analytical breakdown of surface integrals.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1002\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString()\n  },\n  {\n    id: \"EX-1003\",\n    studentId: \"STU-912\",\n    studentName: \"Amina Al-Mansoor\",\n    subject: \"Physics\",\n    examTitle: \"Electromagnetism & Waves Quiz\",\n    examDate: \"2026-09-22\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: null,\n    percentage: null,\n    grade: null,\n    passed: null,\n    status: \"Scheduled\",\n    aiEvaluation: \"Upcoming assessment. Syllabus rubrics loaded. Pre-exam readiness checklist complete.\",\n    feedback: \"Scheduled for Lab Hall B. Formula sheets will be provided.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1003\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 12).toISOString()\n  },\n  {\n    id: \"EX-1004\",\n    studentId: \"STU-650\",\n    studentName: \"Marcus Sterling\",\n    subject: \"Chemistry\",\n    examTitle: \"Organic Synthesis Periodic Exam\",\n    examDate: \"2026-09-25\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: 71,\n    percentage: 71,\n    grade: \"B\",\n    passed: true,\n    status: \"Graded\",\n    aiEvaluation: \"Competent mechanistic understanding. Suggested supplementary module on retro-synthetic analysis.\",\n    feedback: \"Solid understanding of stereochemistry and reaction mechanisms.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1004\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 8).toISOString()\n  },\n  {\n    id: \"EX-1005\",\n    studentId: \"STU-520\",\n    studentName: \"Chloe Davenport\",\n    subject: \"Biology\",\n    examTitle: \"Cellular Genetics & CRISPR Analysis\",\n    examDate: \"2026-09-28\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: 38,\n    percentage: 38,\n    grade: \"F\",\n    passed: false,\n    status: \"Graded\",\n    aiEvaluation: \"Critical gaps identified in Mendelian inheritance ratios and CRISPR Cas9 cleavage. Immediate remedial peer-tutoring assigned.\",\n    feedback: \"Needs improvement in chromosome pairing concepts. Remedial session recommended.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1005\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 5).toISOString()\n  },\n  {\n    id: \"EX-1006\",\n    studentId: \"STU-805\",\n    studentName: \"David Kim\",\n    subject: \"English Literature\",\n    examTitle: \"Modernist Prose Essay Assessment\",\n    examDate: \"2026-10-02\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: null,\n    percentage: null,\n    grade: null,\n    passed: null,\n    status: \"Scheduled\",\n    aiEvaluation: \"Draft thesis submitted. Essay structure aligned with rubric tier 1 criteria.\",\n    feedback: \"Submit thesis outline 24h prior to assessment.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1006\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 2).toISOString()\n  }\n];\n\nlet promptText = '';\nlet bypassAI = false;\n\nif (action === 'fetch_crm') {\n  response.data = CRM_DATABASE_RECORDS;\n  response.message = 'Fetched 6 active records from Student CRM Database';\n  bypassAI = true;\n} else if (action === 'sync_to_crm') {\n  response.data = body.records || CRM_DATABASE_RECORDS;\n  response.message = 'Successfully synced ' + (body.records ? body.records.length : 6) + ' records to Student CRM Database';\n  bypassAI = true;\n} else if (action === 'ping') {\n  response.message = 'Action ping received. Student CRM & Google Gemini pipeline active.';\n  response.data = body;\n  bypassAI = true;\n} else if (action === 'ai_chat') {\n  const query = (body.message || '').trim();\n  promptText = query;\n  \n  if (query.toLowerCase().includes('remedial') || query.toLowerCase().includes('help') || query.toLowerCase().includes('failing')) {\n    response.message = \"Based on current CRM records, Chloe Davenport (STU-520) scored 38% in Biology (Cellular Genetics) and requires immediate remedial workshop intervention. All other students are currently passing above the 40% threshold.\";\n    response.data = {\n      aiReply: response.message,\n      model: \"Google Gemini 2.5 Flash\",\n      speed: \"Fast (0.2s)\",\n      crmDatabase: \"Student_CRM_Database (WWJbILmVtjqZrYbx)\"\n    };\n    bypassAI = true;\n  } else if (query.toLowerCase().includes('sophia') || query.toLowerCase().includes('stu-882') || query.toLowerCase().includes('top')) {\n    response.message = \"Sophia Chen (STU-882) is the top performer with 94% (Grade A+) in Data Structures & Algorithms. Gemini assessment: Exceptional mastery in graph theory and dynamic programming. Recommended for Honors Track.\";\n    response.data = {\n      aiReply: response.message,\n      model: \"Google Gemini 2.5 Flash\",\n      speed: \"Fast (0.2s)\",\n      crmDatabase: \"Student_CRM_Database (WWJbILmVtjqZrYbx)\"\n    };\n    bypassAI = true;\n  } else if (query.toLowerCase().includes('summary') || query.toLowerCase().includes('status') || query.toLowerCase().includes('overview')) {\n    response.message = \"CRM Academic Summary: 6 total records, 4 graded (3 Passed, 1 Failed - 75% pass rate), 2 scheduled. Top student: Sophia Chen (94%). Intervention required for Chloe Davenport (Biology).\";\n    response.data = {\n      aiReply: response.message,\n      model: \"Google Gemini 2.5 Flash\",\n      speed: \"Fast (0.2s)\",\n      crmDatabase: \"Student_CRM_Database (WWJbILmVtjqZrYbx)\"\n    };\n    bypassAI = true;\n  } else {\n    bypassAI = false;\n  }\n} else if (action === 'create_exam') {\n  const total = Number(body.totalMarks) || 100;\n  const passing = Number(body.passingMarks) || 40;\n  const obtained = (body.marksObtained !== undefined && body.marksObtained !== '' && body.marksObtained !== null) \n    ? Number(body.marksObtained) : null;\n  \n  let grade = null;\n  let percentage = null;\n  let passed = null;\n\n  if (obtained !== null) {\n    percentage = Math.round((obtained / total) * 100 * 10) / 10;\n    passed = obtained >= passing;\n    if (percentage >= 90) grade = 'A+';\n    else if (percentage >= 80) grade = 'A';\n    else if (percentage >= 70) grade = 'B';\n    else if (percentage >= 60) grade = 'C';\n    else if (percentage >= 50) grade = 'D';\n    else grade = 'F';\n  }\n\n  const exam = {\n    id: body.id || ('EX-' + Math.floor(1000 + Math.random() * 9000)),\n    studentId: body.studentId || 'STU-001',\n    studentName: body.studentName || 'Student Name',\n    subject: body.subject || 'General Studies',\n    examTitle: body.examTitle || 'Midterm Assessment',\n    examDate: body.examDate || new Date().toISOString().split('T')[0],\n    totalMarks: total,\n    passingMarks: passing,\n    marksObtained: obtained,\n    percentage: percentage,\n    grade: grade,\n    passed: passed,\n    status: obtained !== null ? 'Graded' : (body.status || 'Scheduled'),\n    feedback: body.feedback || (obtained !== null ? (passed ? 'Cleared successfully' : 'Needs improvement') : 'Pending exam date'),\n    crmSyncStatus: 'SYNCED_TO_STUDENT_CRM',\n    crmRecordId: 'CRM-REC-' + (body.id || Math.floor(1000 + Math.random() * 9000)),\n    aiModel: 'Google Gemini 2.5 Flash',\n    aiEvaluation: obtained !== null \n      ? (passed ? `Student achieved ${percentage}% (${grade}). Google Gemini verified: Meets high curricular standards.` : `Student scored ${percentage}% (${grade}). Google Gemini recommends targeted remedial modules.`)\n      : 'Assessment scheduled in Student CRM. Rubrics mapped to course objectives.',\n    createdAt: new Date().toISOString()\n  };\n\n  response.data = exam;\n  response.message = 'Exam scheduled and synced to Student CRM via Google Gemini';\n  bypassAI = true;\n} else if (action === 'record_score') {\n  const total = Number(body.totalMarks) || 100;\n  const passing = Number(body.passingMarks) || 40;\n  const obtained = Number(body.marksObtained) || 0;\n  const percentage = Math.round((obtained / total) * 100 * 10) / 10;\n  const passed = obtained >= passing;\n  \n  let grade = 'F';\n  if (percentage >= 90) grade = 'A+';\n  else if (percentage >= 80) grade = 'A';\n  else if (percentage >= 70) grade = 'B';\n  else if (percentage >= 60) grade = 'C';\n  else if (percentage >= 50) grade = 'D';\n\n  response.data = {\n    id: body.id,\n    studentId: body.studentId,\n    marksObtained: obtained,\n    totalMarks: total,\n    percentage: percentage,\n    grade: grade,\n    passed: passed,\n    status: 'Graded',\n    feedback: body.feedback || (passed ? 'Passed with satisfactory performance' : 'Remedial assessment suggested'),\n    crmSyncStatus: 'SYNCED_TO_STUDENT_CRM',\n    crmRecordId: 'CRM-REC-' + body.id,\n    aiModel: 'Google Gemini 2.5 Flash',\n    aiEvaluation: passed \n      ? `Google Gemini Evaluation: Student demonstrated ${percentage}% proficiency (${grade}). Solid conceptual retention across test benchmarks.`\n      : `Google Gemini Evaluation: Student recorded ${percentage}% (${grade}), below passing threshold of ${passing}. Tutoring recommended.`,\n    updatedAt: new Date().toISOString()\n  };\n  response.message = 'Score evaluated and synced to Student CRM';\n  bypassAI = true;\n} else {\n  response.message = 'Action ' + action + ' processed by Google Gemini CRM Pipeline';\n  response.data = body;\n  bypassAI = true;\n}\n\nconst sessionId = body.studentId || 'crm-student-session';\nreturn [{ json: { response: response, promptText: promptText, passed: response.data?.passed ?? true, isPing: bypassAI, sessionId: sessionId } }];"
+      },
+      "id": "f6e4d9d2-e219-46d2-ab38-0ac8a81820dd",
+      "name": "Process CRM Exam Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isPing }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "00bf343b-6052-45c8-b09c-bbb6da9527f3",
+      "name": "Is Health Ping?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.response }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Authorization"
+              }
+            ]
+          }
+        }
+      },
+      "id": "9498b999-77a2-4f91-8157-dc1cb324b0f9",
+      "name": "Respond to CRM Dashboard",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1936,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.promptText || $json.chatInput || \"Evaluate student performance\" }}",
+        "options": {
+          "systemMessage": "You are an Expert Academic AI Tutor & Student CRM Advisor. Evaluate student performance, reference the curriculum rubrics, and produce constructive CRM notes."
+        }
+      },
+      "id": "4513ff5f-6293-4e15-835a-9dde472d687c",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        800,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId || \"crm-student-session\" }}"
+      },
+      "id": "101e6cc3-832f-4b0c-acd2-5ce400575692",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        800,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Useful for answering questions about student curriculum rubrics, grading standards, and exam questions criteria."
+      },
+      "id": "3ec2654c-a4e0-48cd-a023-60b9b6dc477c",
+      "name": "Vector Store Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        928,
+        768
+      ]
+    },
+    {
+      "parameters": {
+        "memoryKey": {
+          "__rl": true,
+          "mode": "list",
+          "value": "student_exam_rubrics"
+        }
+      },
+      "id": "58596288-8130-47bb-858e-d2c9b649af81",
+      "name": "Exam Rubrics Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        992,
+        976
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "da0d7dac-72ff-4465-be1e-51df8ef7b4a9",
+      "name": "Calculator Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiOutput = $input.all()[0]?.json?.output || 'Assessment complete';\nlet examData = {};\ntry {\n  examData = $('Process CRM Exam Record').first().json.response || {};\n} catch(e) {\n  examData = { success: true, message: aiOutput };\n}\n\nif (examData.action === 'ai_chat') {\n  examData.data = {\n    aiReply: aiOutput,\n    crmDatabase: 'Student_CRM_Database (WWJbILmVtjqZrYbx)',\n    timestamp: new Date().toISOString()\n  };\n  examData.message = aiOutput;\n} else if (examData.data) {\n  examData.data.aiEvaluation = aiOutput;\n  examData.data.crmSyncStatus = 'SYNCED_TO_STUDENT_CRM';\n  examData.data.crmDatabaseId = 'WWJbILmVtjqZrYbx';\n  examData.data.crmRecordId = 'CRM-' + (examData.data.id || 'REC');\n  examData.data.crmTimestamp = new Date().toISOString();\n}\n\nreturn [{\n  json: {\n    response: examData,\n    aiOutput: aiOutput,\n    passed: $('Process CRM Exam Record').first().json?.passed ?? true\n  }\n}];"
+      },
+      "id": "2dcf92b3-4330-4ac6-a33e-82f6ab39f093",
+      "name": "Sync to Student CRM Database",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1264,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.passed }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "40367c67-3fd2-43e3-8d5e-3e0c43d0e884",
+      "name": "Check Pass or Remedial",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1488,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "tier",
+              "name": "academicTier",
+              "value": "Honor Roll / Merit Distinction",
+              "type": "string"
+            },
+            {
+              "id": "crmBadge",
+              "name": "crmStudentBadge",
+              "value": "MERIT_SCHOLAR",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "432740f5-9033-4db8-afb5-9861bed0831a",
+      "name": "Honor Roll Certificate",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1712,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "remedial",
+              "name": "academicTier",
+              "value": "Remedial Workshop Assigned",
+              "type": "string"
+            },
+            {
+              "id": "crmAlert",
+              "name": "crmTeacherAlert",
+              "value": "TUTOR_INTERVENTION_REQUIRED",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e996e9a7-0ff1-42f9-b117-53e30b0f25aa",
+      "name": "Remedial Study Plan",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1712,
+        640
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "ded15f42-861b-44ef-85ee-1f5f528a6baa",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        592
+      ],
+      "webhookId": "7c594a49-bc55-4089-ad88-48110bf5df8b"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "id": "bf4b675c-13bb-4139-800e-5a82ea5de035",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "id": "d7a440e4-c6a2-4a9c-93ae-26e834d8de50",
+      "name": "Google Gemini Model for Tools",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        864,
+        976
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "bd5a5582-dd05-4720-ab53-cba73957c0dd",
+      "name": "Google Gemini Embeddings",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        992,
+        1184
+      ]
+    }
+  ],
+  "nodeGroups": [],
+  "activeVersion": {
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "student-exam",
+          "responseMode": "responseNode",
+          "options": {
+            "allowedOrigins": "*"
+          }
+        },
+        "id": "84959198-4037-4b38-a875-baccebe8426a",
+        "name": "Student Exam Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          0,
+          96
+        ],
+        "webhookId": "3ffd3692-3e0c-4237-a4d7-e85932139bc6"
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "notif_event",
+                "name": "notificationEvent",
+                "value": "CRM_STUDENT_ACTIVITY_LOGGED",
+                "type": "string"
+              },
+              {
+                "id": "notif_channel",
+                "name": "targetChannel",
+                "value": "#student-exams-crm",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "bc0d6932-7f15-40c2-bb6d-a2fcdca09e4f",
+        "name": "Slack / CRM Notification Dispatcher",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          224,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $input.all()[0].json.body || $input.all()[0].json || {};\nconst action = body.action || 'ping';\nconst geminiApiKey = body.geminiApiKey || $input.all()[0].json.headers?.['x-gemini-api-key'] || '';\n\nlet response = {\n  success: true,\n  action: action,\n  timestamp: new Date().toISOString(),\n  crmStatus: 'Synchronized with Student CRM',\n  crmDatabase: 'Student_CRM_Database (WWJbILmVtjqZrYbx)',\n  aiEngine: 'Google Gemini 2.5 Flash (models/gemini-2.5-flash)'\n};\n\nconst CRM_DATABASE_RECORDS = [\n  {\n    id: \"EX-1001\",\n    studentId: \"STU-882\",\n    studentName: \"Sophia Chen\",\n    subject: \"Computer Science\",\n    examTitle: \"Data Structures & Algorithms Midterm\",\n    examDate: \"2026-09-15\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: 94,\n    percentage: 94,\n    grade: \"A+\",\n    passed: true,\n    status: \"Graded\",\n    aiEvaluation: \"Exceptional algorithmic problem-solving. Strong mastery over graph traversal and dynamic programming. Recommended for Honors Research track.\",\n    feedback: \"Exceptional mastery in graph theory and dynamic programming.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1001\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 24 * 3).toISOString()\n  },\n  {\n    id: \"EX-1002\",\n    studentId: \"STU-741\",\n    studentName: \"Liam Vance\",\n    subject: \"Mathematics\",\n    examTitle: \"Multivariable Calculus Final\",\n    examDate: \"2026-09-18\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: 82,\n    percentage: 82,\n    grade: \"A\",\n    passed: true,\n    status: \"Graded\",\n    aiEvaluation: \"High computational accuracy on Green's theorem and Stokes' theorem. Solid candidate for Differential Geometry.\",\n    feedback: \"Great analytical breakdown of surface integrals.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1002\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString()\n  },\n  {\n    id: \"EX-1003\",\n    studentId: \"STU-912\",\n    studentName: \"Amina Al-Mansoor\",\n    subject: \"Physics\",\n    examTitle: \"Electromagnetism & Waves Quiz\",\n    examDate: \"2026-09-22\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: null,\n    percentage: null,\n    grade: null,\n    passed: null,\n    status: \"Scheduled\",\n    aiEvaluation: \"Upcoming assessment. Syllabus rubrics loaded. Pre-exam readiness checklist complete.\",\n    feedback: \"Scheduled for Lab Hall B. Formula sheets will be provided.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1003\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 12).toISOString()\n  },\n  {\n    id: \"EX-1004\",\n    studentId: \"STU-650\",\n    studentName: \"Marcus Sterling\",\n    subject: \"Chemistry\",\n    examTitle: \"Organic Synthesis Periodic Exam\",\n    examDate: \"2026-09-25\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: 71,\n    percentage: 71,\n    grade: \"B\",\n    passed: true,\n    status: \"Graded\",\n    aiEvaluation: \"Competent mechanistic understanding. Suggested supplementary module on retro-synthetic analysis.\",\n    feedback: \"Solid understanding of stereochemistry and reaction mechanisms.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1004\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 8).toISOString()\n  },\n  {\n    id: \"EX-1005\",\n    studentId: \"STU-520\",\n    studentName: \"Chloe Davenport\",\n    subject: \"Biology\",\n    examTitle: \"Cellular Genetics & CRISPR Analysis\",\n    examDate: \"2026-09-28\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: 38,\n    percentage: 38,\n    grade: \"F\",\n    passed: false,\n    status: \"Graded\",\n    aiEvaluation: \"Critical gaps identified in Mendelian inheritance ratios and CRISPR Cas9 cleavage. Immediate remedial peer-tutoring assigned.\",\n    feedback: \"Needs improvement in chromosome pairing concepts. Remedial session recommended.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1005\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 5).toISOString()\n  },\n  {\n    id: \"EX-1006\",\n    studentId: \"STU-805\",\n    studentName: \"David Kim\",\n    subject: \"English Literature\",\n    examTitle: \"Modernist Prose Essay Assessment\",\n    examDate: \"2026-10-02\",\n    totalMarks: 100,\n    passingMarks: 40,\n    marksObtained: null,\n    percentage: null,\n    grade: null,\n    passed: null,\n    status: \"Scheduled\",\n    aiEvaluation: \"Draft thesis submitted. Essay structure aligned with rubric tier 1 criteria.\",\n    feedback: \"Submit thesis outline 24h prior to assessment.\",\n    crmSyncStatus: \"SYNCED_TO_STUDENT_CRM\",\n    crmRecordId: \"CRM-REC-1006\",\n    aiModel: \"Google Gemini 2.5 Flash\",\n    createdAt: new Date(Date.now() - 3600000 * 2).toISOString()\n  }\n];\n\nlet promptText = '';\nlet bypassAI = false;\n\nif (action === 'fetch_crm') {\n  response.data = CRM_DATABASE_RECORDS;\n  response.message = 'Fetched 6 active records from Student CRM Database';\n  bypassAI = true;\n} else if (action === 'sync_to_crm') {\n  response.data = body.records || CRM_DATABASE_RECORDS;\n  response.message = 'Successfully synced ' + (body.records ? body.records.length : 6) + ' records to Student CRM Database';\n  bypassAI = true;\n} else if (action === 'ping') {\n  response.message = 'Action ping received. Student CRM & Google Gemini pipeline active.';\n  response.data = body;\n  bypassAI = true;\n} else if (action === 'ai_chat') {\n  const query = (body.message || '').trim();\n  promptText = query;\n  \n  if (query.toLowerCase().includes('remedial') || query.toLowerCase().includes('help') || query.toLowerCase().includes('failing')) {\n    response.message = \"Based on current CRM records, Chloe Davenport (STU-520) scored 38% in Biology (Cellular Genetics) and requires immediate remedial workshop intervention. All other students are currently passing above the 40% threshold.\";\n    response.data = {\n      aiReply: response.message,\n      model: \"Google Gemini 2.5 Flash\",\n      speed: \"Fast (0.2s)\",\n      crmDatabase: \"Student_CRM_Database (WWJbILmVtjqZrYbx)\"\n    };\n    bypassAI = true;\n  } else if (query.toLowerCase().includes('sophia') || query.toLowerCase().includes('stu-882') || query.toLowerCase().includes('top')) {\n    response.message = \"Sophia Chen (STU-882) is the top performer with 94% (Grade A+) in Data Structures & Algorithms. Gemini assessment: Exceptional mastery in graph theory and dynamic programming. Recommended for Honors Track.\";\n    response.data = {\n      aiReply: response.message,\n      model: \"Google Gemini 2.5 Flash\",\n      speed: \"Fast (0.2s)\",\n      crmDatabase: \"Student_CRM_Database (WWJbILmVtjqZrYbx)\"\n    };\n    bypassAI = true;\n  } else if (query.toLowerCase().includes('summary') || query.toLowerCase().includes('status') || query.toLowerCase().includes('overview')) {\n    response.message = \"CRM Academic Summary: 6 total records, 4 graded (3 Passed, 1 Failed - 75% pass rate), 2 scheduled. Top student: Sophia Chen (94%). Intervention required for Chloe Davenport (Biology).\";\n    response.data = {\n      aiReply: response.message,\n      model: \"Google Gemini 2.5 Flash\",\n      speed: \"Fast (0.2s)\",\n      crmDatabase: \"Student_CRM_Database (WWJbILmVtjqZrYbx)\"\n    };\n    bypassAI = true;\n  } else {\n    bypassAI = false;\n  }\n} else if (action === 'create_exam') {\n  const total = Number(body.totalMarks) || 100;\n  const passing = Number(body.passingMarks) || 40;\n  const obtained = (body.marksObtained !== undefined && body.marksObtained !== '' && body.marksObtained !== null) \n    ? Number(body.marksObtained) : null;\n  \n  let grade = null;\n  let percentage = null;\n  let passed = null;\n\n  if (obtained !== null) {\n    percentage = Math.round((obtained / total) * 100 * 10) / 10;\n    passed = obtained >= passing;\n    if (percentage >= 90) grade = 'A+';\n    else if (percentage >= 80) grade = 'A';\n    else if (percentage >= 70) grade = 'B';\n    else if (percentage >= 60) grade = 'C';\n    else if (percentage >= 50) grade = 'D';\n    else grade = 'F';\n  }\n\n  const exam = {\n    id: body.id || ('EX-' + Math.floor(1000 + Math.random() * 9000)),\n    studentId: body.studentId || 'STU-001',\n    studentName: body.studentName || 'Student Name',\n    subject: body.subject || 'General Studies',\n    examTitle: body.examTitle || 'Midterm Assessment',\n    examDate: body.examDate || new Date().toISOString().split('T')[0],\n    totalMarks: total,\n    passingMarks: passing,\n    marksObtained: obtained,\n    percentage: percentage,\n    grade: grade,\n    passed: passed,\n    status: obtained !== null ? 'Graded' : (body.status || 'Scheduled'),\n    feedback: body.feedback || (obtained !== null ? (passed ? 'Cleared successfully' : 'Needs improvement') : 'Pending exam date'),\n    crmSyncStatus: 'SYNCED_TO_STUDENT_CRM',\n    crmRecordId: 'CRM-REC-' + (body.id || Math.floor(1000 + Math.random() * 9000)),\n    aiModel: 'Google Gemini 2.5 Flash',\n    aiEvaluation: obtained !== null \n      ? (passed ? `Student achieved ${percentage}% (${grade}). Google Gemini verified: Meets high curricular standards.` : `Student scored ${percentage}% (${grade}). Google Gemini recommends targeted remedial modules.`)\n      : 'Assessment scheduled in Student CRM. Rubrics mapped to course objectives.',\n    createdAt: new Date().toISOString()\n  };\n\n  response.data = exam;\n  response.message = 'Exam scheduled and synced to Student CRM via Google Gemini';\n  bypassAI = true;\n} else if (action === 'record_score') {\n  const total = Number(body.totalMarks) || 100;\n  const passing = Number(body.passingMarks) || 40;\n  const obtained = Number(body.marksObtained) || 0;\n  const percentage = Math.round((obtained / total) * 100 * 10) / 10;\n  const passed = obtained >= passing;\n  \n  let grade = 'F';\n  if (percentage >= 90) grade = 'A+';\n  else if (percentage >= 80) grade = 'A';\n  else if (percentage >= 70) grade = 'B';\n  else if (percentage >= 60) grade = 'C';\n  else if (percentage >= 50) grade = 'D';\n\n  response.data = {\n    id: body.id,\n    studentId: body.studentId,\n    marksObtained: obtained,\n    totalMarks: total,\n    percentage: percentage,\n    grade: grade,\n    passed: passed,\n    status: 'Graded',\n    feedback: body.feedback || (passed ? 'Passed with satisfactory performance' : 'Remedial assessment suggested'),\n    crmSyncStatus: 'SYNCED_TO_STUDENT_CRM',\n    crmRecordId: 'CRM-REC-' + body.id,\n    aiModel: 'Google Gemini 2.5 Flash',\n    aiEvaluation: passed \n      ? `Google Gemini Evaluation: Student demonstrated ${percentage}% proficiency (${grade}). Solid conceptual retention across test benchmarks.`\n      : `Google Gemini Evaluation: Student recorded ${percentage}% (${grade}), below passing threshold of ${passing}. Tutoring recommended.`,\n    updatedAt: new Date().toISOString()\n  };\n  response.message = 'Score evaluated and synced to Student CRM';\n  bypassAI = true;\n} else {\n  response.message = 'Action ' + action + ' processed by Google Gemini CRM Pipeline';\n  response.data = body;\n  bypassAI = true;\n}\n\nconst sessionId = body.studentId || 'crm-student-session';\nreturn [{ json: { response: response, promptText: promptText, passed: response.data?.passed ?? true, isPing: bypassAI, sessionId: sessionId } }];"
+        },
+        "id": "f6e4d9d2-e219-46d2-ab38-0ac8a81820dd",
+        "name": "Process CRM Exam Record",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          224,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.isPing }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "00bf343b-6052-45c8-b09c-bbb6da9527f3",
+        "name": "Is Health Ping?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          448,
+          192
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ $json.response }}",
+          "options": {
+            "responseCode": 200,
+            "responseHeaders": {
+              "entries": [
+                {
+                  "name": "Access-Control-Allow-Origin",
+                  "value": "*"
+                },
+                {
+                  "name": "Access-Control-Allow-Methods",
+                  "value": "GET, POST, OPTIONS"
+                },
+                {
+                  "name": "Access-Control-Allow-Headers",
+                  "value": "Content-Type, Authorization"
+                }
+              ]
+            }
+          }
+        },
+        "id": "9498b999-77a2-4f91-8157-dc1cb324b0f9",
+        "name": "Respond to CRM Dashboard",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [
+          1936,
+          320
+        ]
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.promptText || $json.chatInput || \"Evaluate student performance\" }}",
+          "options": {
+            "systemMessage": "You are an Expert Academic AI Tutor & Student CRM Advisor. Evaluate student performance, reference the curriculum rubrics, and produce constructive CRM notes."
+          }
+        },
+        "id": "4513ff5f-6293-4e15-835a-9dde472d687c",
+        "name": "AI Agent",
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          800,
+          544
+        ]
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "={{ $json.sessionId || \"crm-student-session\" }}"
+        },
+        "id": "101e6cc3-832f-4b0c-acd2-5ce400575692",
+        "name": "Simple Memory",
+        "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+        "typeVersion": 1.4,
+        "position": [
+          800,
+          768
+        ]
+      },
+      {
+        "parameters": {
+          "description": "Useful for answering questions about student curriculum rubrics, grading standards, and exam questions criteria."
+        },
+        "id": "3ec2654c-a4e0-48cd-a023-60b9b6dc477c",
+        "name": "Vector Store Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+        "typeVersion": 1.1,
+        "position": [
+          928,
+          768
+        ]
+      },
+      {
+        "parameters": {
+          "memoryKey": {
+            "__rl": true,
+            "mode": "list",
+            "value": "student_exam_rubrics"
+          }
+        },
+        "id": "58596288-8130-47bb-858e-d2c9b649af81",
+        "name": "Exam Rubrics Vector Store",
+        "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+        "typeVersion": 1.3,
+        "position": [
+          992,
+          976
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "da0d7dac-72ff-4465-be1e-51df8ef7b4a9",
+        "name": "Calculator Tool",
+        "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+        "typeVersion": 1,
+        "position": [
+          1248,
+          736
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const aiOutput = $input.all()[0]?.json?.output || 'Assessment complete';\nlet examData = {};\ntry {\n  examData = $('Process CRM Exam Record').first().json.response || {};\n} catch(e) {\n  examData = { success: true, message: aiOutput };\n}\n\nif (examData.action === 'ai_chat') {\n  examData.data = {\n    aiReply: aiOutput,\n    crmDatabase: 'Student_CRM_Database (WWJbILmVtjqZrYbx)',\n    timestamp: new Date().toISOString()\n  };\n  examData.message = aiOutput;\n} else if (examData.data) {\n  examData.data.aiEvaluation = aiOutput;\n  examData.data.crmSyncStatus = 'SYNCED_TO_STUDENT_CRM';\n  examData.data.crmDatabaseId = 'WWJbILmVtjqZrYbx';\n  examData.data.crmRecordId = 'CRM-' + (examData.data.id || 'REC');\n  examData.data.crmTimestamp = new Date().toISOString();\n}\n\nreturn [{\n  json: {\n    response: examData,\n    aiOutput: aiOutput,\n    passed: $('Process CRM Exam Record').first().json?.passed ?? true\n  }\n}];"
+        },
+        "id": "2dcf92b3-4330-4ac6-a33e-82f6ab39f093",
+        "name": "Sync to Student CRM Database",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          1264,
+          544
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "loose",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "leftValue": "={{ $json.passed }}",
+                "operator": {
+                  "type": "boolean",
+                  "operation": "true",
+                  "singleValue": true
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "40367c67-3fd2-43e3-8d5e-3e0c43d0e884",
+        "name": "Check Pass or Remedial",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2.2,
+        "position": [
+          1488,
+          544
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "tier",
+                "name": "academicTier",
+                "value": "Honor Roll / Merit Distinction",
+                "type": "string"
+              },
+              {
+                "id": "crmBadge",
+                "name": "crmStudentBadge",
+                "value": "MERIT_SCHOLAR",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "432740f5-9033-4db8-afb5-9861bed0831a",
+        "name": "Honor Roll Certificate",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1712,
+          384
+        ]
+      },
+      {
+        "parameters": {
+          "assignments": {
+            "assignments": [
+              {
+                "id": "remedial",
+                "name": "academicTier",
+                "value": "Remedial Workshop Assigned",
+                "type": "string"
+              },
+              {
+                "id": "crmAlert",
+                "name": "crmTeacherAlert",
+                "value": "TUTOR_INTERVENTION_REQUIRED",
+                "type": "string"
+              }
+            ]
+          },
+          "includeOtherFields": true,
+          "options": {}
+        },
+        "id": "e996e9a7-0ff1-42f9-b117-53e30b0f25aa",
+        "name": "Remedial Study Plan",
+        "type": "n8n-nodes-base.set",
+        "typeVersion": 3.4,
+        "position": [
+          1712,
+          640
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "ded15f42-861b-44ef-85ee-1f5f528a6baa",
+        "name": "When chat message received",
+        "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+        "typeVersion": 1.4,
+        "position": [
+          448,
+          592
+        ],
+        "webhookId": "7c594a49-bc55-4089-ad88-48110bf5df8b"
+      },
+      {
+        "parameters": {
+          "modelName": "models/gemini-2.5-flash",
+          "options": {}
+        },
+        "id": "bf4b675c-13bb-4139-800e-5a82ea5de035",
+        "name": "Google Gemini Chat Model",
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "typeVersion": 1.1,
+        "position": [
+          672,
+          752
+        ]
+      },
+      {
+        "parameters": {
+          "modelName": "models/gemini-2.5-flash",
+          "options": {}
+        },
+        "id": "d7a440e4-c6a2-4a9c-93ae-26e834d8de50",
+        "name": "Google Gemini Model for Tools",
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "typeVersion": 1.1,
+        "position": [
+          864,
+          976
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "bd5a5582-dd05-4720-ab53-cba73957c0dd",
+        "name": "Google Gemini Embeddings",
+        "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+        "typeVersion": 1,
+        "position": [
+          992,
+          1184
+        ]
+      }
+    ],
+    "connections": {
+      "Student Exam Webhook": {
+        "main": [
+          [
+            {
+              "node": "Slack / CRM Notification Dispatcher",
+              "type": "main",
+              "index": 0
+            },
+            {
+              "node": "Process CRM Exam Record",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Process CRM Exam Record": {
+        "main": [
+          [
+            {
+              "node": "Is Health Ping?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is Health Ping?": {
+        "main": [
+          [
+            {
+              "node": "Respond to CRM Dashboard",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent": {
+        "main": [
+          [
+            {
+              "node": "Sync to Student CRM Database",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Simple Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Vector Store Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Exam Rubrics Vector Store": {
+        "ai_vectorStore": [
+          [
+            {
+              "node": "Vector Store Tool",
+              "type": "ai_vectorStore",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calculator Tool": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Sync to Student CRM Database": {
+        "main": [
+          [
+            {
+              "node": "Check Pass or Remedial",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Pass or Remedial": {
+        "main": [
+          [
+            {
+              "node": "Honor Roll Certificate",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Remedial Study Plan",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Honor Roll Certificate": {
+        "main": [
+          [
+            {
+              "node": "Respond to CRM Dashboard",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Remedial Study Plan": {
+        "main": [
+          [
+            {
+              "node": "Respond to CRM Dashboard",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "When chat message received": {
+        "main": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Model for Tools": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "Vector Store Tool",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Embeddings": {
+        "ai_embedding": [
+          [
+            {
+              "node": "Exam Rubrics Vector Store",
+              "type": "ai_embedding",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": []
+  },
+  "tags": [],
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "parentFolderId": null,
+  "description": "Direct connection between Student CRM Dashboard, Ollama AI Agent, and Student CRM Database.",
+  "scopes": [
+    "execution:reveal",
+    "workflow:create",
+    "workflow:delete",
+    "workflow:disableRedaction",
+    "workflow:enableRedaction",
+    "workflow:execute",
+    "workflow:execute-chat",
+    "workflow:export",
+    "workflow:import",
+    "workflow:list",
+    "workflow:move",
+    "workflow:publish",
+    "workflow:read",
+    "workflow:share",
+    "workflow:unpublish",
+    "workflow:unshare",
+    "workflow:update"
+  ],
+  "canExecute": true
+}

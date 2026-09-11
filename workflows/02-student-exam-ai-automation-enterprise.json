@@ -1,0 +1,497 @@
+{
+  "id": "IWKr2KiFF699UMPG",
+  "name": "Student Exam AI Automation Pipeline",
+  "active": false,
+  "isArchived": false,
+  "versionId": "6652357f-df06-4662-a5c1-503750ff499d",
+  "activeVersionId": null,
+  "triggerCount": 2,
+  "createdAt": "2026-09-11T06:21:00.807Z",
+  "updatedAt": "2026-09-11T07:05:45.118Z",
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true,
+    "binaryMode": "separate"
+  },
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Slack / Discord Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model for Tools": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exam Rubrics Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Exam Rubrics Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Student Exam Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Exam Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Exam Action": {
+      "main": [
+        [
+          {
+            "node": "Check Pass or Remedial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Pass or Remedial": {
+      "main": [
+        [
+          {
+            "node": "Honor Roll Certificate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Remedial Study Plan",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Honor Roll Certificate": {
+      "main": [
+        [
+          {
+            "node": "Respond to Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remedial Study Plan": {
+      "main": [
+        [
+          {
+            "node": "Respond to Dashboard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "2918237a-b069-4d9a-b6ea-afb0d4b170dd",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        256
+      ],
+      "webhookId": "679ff0ac-e909-4c32-91ca-9597137f2043"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://httpbin.org/post",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"exam_activity\",\n  \"timestamp\": new Date().toISOString(),\n  \"data\": $json\n}",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "a6a4cd92-16cb-4e83-b1fc-ce2b1e3e346a",
+      "name": "Slack / Discord Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatPrompt || $json.chatInput || \"Evaluate student performance\" }}",
+        "options": {
+          "systemMessage": "You are an Expert Academic AI Tutor & Exam Evaluation Advisor. Assess student exam scores, provide analytical grading feedback, highlight core strengths, and recommend improvement topics using the curriculum rubrics."
+        }
+      },
+      "id": "672c08dc-47f4-47ae-80bf-42c242cf1044",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        352,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:latest",
+        "options": {}
+      },
+      "id": "108e7029-eb33-41b7-820b-9be7098a178c",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        224,
+        416
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "e7faef9a-b364-4681-a7be-d066df999e93",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        352,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Useful for when you need to answer questions about student curriculum rubrics, grading standards, and exam questions criteria."
+      },
+      "id": "465ca158-f5a7-4f20-9cb6-7df1cff16383",
+      "name": "Vector Store Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "model": "llama3.2:latest",
+        "options": {}
+      },
+      "id": "064ae037-1e7f-4757-82e9-1c26bf4950ea",
+      "name": "Ollama Chat Model for Tools",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        416,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "memoryKey": {
+          "__rl": true,
+          "mode": "list",
+          "value": "exam_rubrics_kb"
+        }
+      },
+      "id": "49873d31-5fde-45ec-a0eb-7defefb9bea1",
+      "name": "Exam Rubrics Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        544,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "model": "mxbai-embed-large:latest"
+      },
+      "id": "ba6149f8-7712-4dca-ad1c-7799bc70548c",
+      "name": "Embeddings Ollama",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        544,
+        832
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "24598299-3a3a-4147-8411-ffdc67ad8b93",
+      "name": "Calculator",
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        608,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "student-exam",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "af653e76-d6a3-4de6-8a48-e4c66ee57372",
+      "name": "Student Exam Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        1136
+      ],
+      "webhookId": "3643d2d4-65d3-4f3f-9851-6263ff9bcb24"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst body = $input.all()[0].json.body || $input.all()[0].json || {};\nconst action = body.action || 'ping';\n\nlet response = {\n  success: true,\n  action: action,\n  timestamp: new Date().toISOString()\n};\n\nif (action === 'create_exam') {\n  const total = Number(body.totalMarks) || 100;\n  const passing = Number(body.passingMarks) || 40;\n  const obtained = (body.marksObtained !== undefined && body.marksObtained !== '' && body.marksObtained !== null) \n    ? Number(body.marksObtained) : null;\n  \n  let grade = null;\n  let percentage = null;\n  let passed = null;\n\n  if (obtained !== null) {\n    percentage = Math.round((obtained / total) * 100 * 10) / 10;\n    passed = obtained >= passing;\n    if (percentage >= 90) grade = 'A+';\n    else if (percentage >= 80) grade = 'A';\n    else if (percentage >= 70) grade = 'B';\n    else if (percentage >= 60) grade = 'C';\n    else if (percentage >= 50) grade = 'D';\n    else grade = 'F';\n  }\n\n  const exam = {\n    id: body.id || ('EX-' + Math.floor(1000 + Math.random() * 9000)),\n    studentId: body.studentId || 'STU-001',\n    studentName: body.studentName || 'Student Name',\n    subject: body.subject || 'General Studies',\n    examTitle: body.examTitle || 'Midterm Assessment',\n    examDate: body.examDate || new Date().toISOString().split('T')[0],\n    totalMarks: total,\n    passingMarks: passing,\n    marksObtained: obtained,\n    percentage: percentage,\n    grade: grade,\n    passed: passed,\n    status: obtained !== null ? 'Graded' : (body.status || 'Scheduled'),\n    feedback: body.feedback || (obtained !== null ? (passed ? 'Cleared successfully' : 'Needs improvement') : 'Pending exam date')\n  };\n\n  response.data = exam;\n  response.message = 'Exam scheduled/recorded successfully in n8n';\n} else if (action === 'record_score') {\n  const total = Number(body.totalMarks) || 100;\n  const passing = Number(body.passingMarks) || 40;\n  const obtained = Number(body.marksObtained) || 0;\n  const percentage = Math.round((obtained / total) * 100 * 10) / 10;\n  const passed = obtained >= passing;\n  \n  let grade = 'F';\n  if (percentage >= 90) grade = 'A+';\n  else if (percentage >= 80) grade = 'A';\n  else if (percentage >= 70) grade = 'B';\n  else if (percentage >= 60) grade = 'C';\n  else if (percentage >= 50) grade = 'D';\n\n  response.data = {\n    id: body.id,\n    studentId: body.studentId,\n    marksObtained: obtained,\n    totalMarks: total,\n    percentage: percentage,\n    grade: grade,\n    passed: passed,\n    status: 'Graded',\n    feedback: body.feedback || (passed ? 'Passed with satisfactory performance' : 'Remedial assessment suggested'),\n    updatedAt: new Date().toISOString()\n  };\n  response.message = 'Score calculated and grade assigned by n8n workflow';\n} else if (action === 'get_summary') {\n  response.data = {\n    status: 'online',\n    workflowName: 'Student Exam Management AI Pipeline',\n    version: '2.0.0',\n    capabilities: ['create_exam', 'record_score', 'ai_tutor', 'analytics']\n  };\n  response.message = 'Workflow connection active and operational';\n} else {\n  response.message = 'Action ' + action + ' received and processed successfully';\n  response.data = body;\n}\n\nconst chatPrompt = body.chatInput || ('Student ' + (response.data?.studentName || 'Student') + ' scored ' + (response.data?.marksObtained || 0) + '/' + (response.data?.totalMarks || 100) + ' in ' + (response.data?.subject || 'Subject') + '. Provide academic evaluation commentary.');\n\nreturn [{ json: { response: response, chatPrompt: chatPrompt, passed: response.data?.passed ?? true } }];\n"
+      },
+      "id": "1b70bb31-9e4b-423e-b831-0a57ec9cb8d4",
+      "name": "Process Exam Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.passed }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "957e1eec-591f-45d4-925e-37624ba481cf",
+      "name": "Check Pass or Remedial",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "tier",
+              "name": "academicTier",
+              "value": "Honor Roll / Merit Distinction",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "42f8c823-a713-4b59-9dee-6cc2f93d1611",
+      "name": "Honor Roll Certificate",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.response }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "GET, POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type, Authorization"
+              }
+            ]
+          }
+        }
+      },
+      "id": "aaa957bd-4279-4d71-b5d0-da765c082d0a",
+      "name": "Respond to Dashboard",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "remedial",
+              "name": "academicTier",
+              "value": "Remedial Workshop Assigned",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "5f9f34e8-4363-4ec2-a62c-080616dec800",
+      "name": "Remedial Study Plan",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        1232
+      ]
+    }
+  ],
+  "nodeGroups": [],
+  "activeVersion": null,
+  "tags": [],
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "parentFolderId": null,
+  "description": "Multi-branch Student Exam AI Agent Workflow using Docker Ollama models, memory, vector store tools, notifications, and webhook integration.",
+  "scopes": [
+    "execution:reveal",
+    "workflow:create",
+    "workflow:delete",
+    "workflow:disableRedaction",
+    "workflow:enableRedaction",
+    "workflow:execute",
+    "workflow:execute-chat",
+    "workflow:export",
+    "workflow:import",
+    "workflow:list",
+    "workflow:move",
+    "workflow:publish",
+    "workflow:read",
+    "workflow:share",
+    "workflow:unpublish",
+    "workflow:unshare",
+    "workflow:update"
+  ],
+  "canExecute": true
+}
