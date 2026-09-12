@@ -204,6 +204,16 @@
 
           <div class="action-divider"></div>
 
+          <!-- Excel Import & Export Tools -->
+          <button class="btn btn-outline btn-sm" id="btnOpenImportModal" title="Import students exam data from an Excel or CSV file">
+            <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> <span>Import Excel</span>
+          </button>
+          <button class="btn btn-outline btn-sm" id="btnExportExcel" title="Export current student exams into an Excel spreadsheet">
+            <i class="fa-solid fa-file-arrow-down" style="color: #38bdf8;"></i> <span class="hide-tablet">Export Excel</span>
+          </button>
+
+          <div class="action-divider"></div>
+
           <!-- CRM Sync Actions -->
           <button class="btn btn-emerald btn-sm" id="btnSyncFromCRM" title="Pull latest records from Student CRM Database">
             <i class="fa-solid fa-cloud-arrow-down"></i> <span class="hide-tablet">Sync from CRM</span>
@@ -711,6 +721,116 @@
       </div>
     </div>
 
+    <!-- Modal: Excel Import -->
+    <div class="modal-backdrop" id="modalImportExcel">
+      <div class="modal-card excel-modal">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <div class="modal-icon-badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+              <i class="fa-solid fa-file-excel"></i>
+            </div>
+            <div>
+              <h3>Import Student Exam Records</h3>
+              <p>Upload an Excel (.xlsx, .xls) or CSV spreadsheet to batch import students</p>
+            </div>
+          </div>
+          <button class="btn-icon close-modal" data-close="modalImportExcel">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="excel-modal-body">
+          <!-- Template Download Bar -->
+          <div class="excel-template-bar">
+            <div class="template-info">
+              <i class="fa-solid fa-circle-info" style="color: #38bdf8;"></i>
+              <span>Need the standard layout? Download a pre-formatted template:</span>
+            </div>
+            <div class="template-actions">
+              <button type="button" class="btn btn-outline btn-xs" id="btnDownloadTemplateXlsx">
+                <i class="fa-solid fa-download" style="color: #10b981;"></i> <span>Template (.xlsx)</span>
+              </button>
+              <button type="button" class="btn btn-outline btn-xs" id="btnDownloadTemplateCsv">
+                <i class="fa-solid fa-download" style="color: #38bdf8;"></i> <span>Template (.csv)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Drag and Drop Zone -->
+          <div class="excel-dropzone" id="excelDropzone">
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+            <div class="dropzone-icon">
+              <i class="fa-solid fa-cloud-arrow-up"></i>
+            </div>
+            <div class="dropzone-title">Click to upload or drag & drop Excel file</div>
+            <div class="dropzone-subtitle">Supports .xlsx, .xls, and .csv files (up to 10MB)</div>
+            <div class="dropzone-file-info" id="dropzoneFileInfo" style="display: none;">
+              <i class="fa-solid fa-file-circle-check" style="color: #10b981; font-size: 1.25rem;"></i>
+              <div class="dropzone-file-details">
+                <span class="dropzone-filename" id="dropzoneFileName">students.xlsx</span>
+                <span class="file-size-badge" id="dropzoneFileSize">24 KB</span>
+              </div>
+              <button type="button" class="btn-icon-xs" id="btnRemoveExcelFile" title="Remove file">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Preview & Validation Area -->
+          <div class="import-preview-section" id="importPreviewSection" style="display: none;">
+            <div class="preview-header">
+              <div class="preview-title">
+                <i class="fa-solid fa-table-list" style="color: #60a5fa;"></i>
+                <span id="previewCountLabel">Preview Parsed Records (0)</span>
+              </div>
+              <span class="preview-badge" id="previewValidationBadge">All Valid</span>
+            </div>
+
+            <div class="import-preview-table-wrapper">
+              <table class="import-preview-table" id="importPreviewTable">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Subject</th>
+                    <th>Exam Title</th>
+                    <th>Marks</th>
+                    <th>Total</th>
+                    <th>Grade</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="importPreviewTbody">
+                  <!-- Rows inserted dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Import Settings / Options -->
+            <div class="import-options">
+              <span class="options-label"><i class="fa-solid fa-sliders"></i> Import Mode:</span>
+              <label class="radio-label">
+                <input type="radio" name="importMode" value="append" checked>
+                <span>Append to existing records</span>
+              </label>
+              <label class="radio-label">
+                <input type="radio" name="importMode" value="replace">
+                <span>Replace all current records</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal" data-close="modalImportExcel">Cancel</button>
+          <button type="button" class="btn btn-emerald" id="btnConfirmExcelImport" disabled>
+            <i class="fa-solid fa-file-import"></i> <span>Confirm & Import Records</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating AI CRM Copilot FAB & Drawer -->
     <button class="ai-copilot-fab" id="btnOpenCopilot" title="Open Google Gemini CRM Copilot">
       <div class="fab-sparkle"><i class="fa-solid fa-bolt" style="color: #1e1b4b;"></i></div>
@@ -752,6 +872,7 @@
 
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="workflow-canvas.js"></script>
   <script src="app.js"></script>
 </body>

@@ -215,6 +215,24 @@ const DOM = {
   copilotInput: document.getElementById('copilotInput'),
   btnSendCopilot: document.getElementById('btnSendCopilot'),
 
+  // Excel Import & Export
+  btnOpenImportModal: document.getElementById('btnOpenImportModal'),
+  btnExportExcel: document.getElementById('btnExportExcel'),
+  modalImportExcel: document.getElementById('modalImportExcel'),
+  btnDownloadTemplateXlsx: document.getElementById('btnDownloadTemplateXlsx'),
+  btnDownloadTemplateCsv: document.getElementById('btnDownloadTemplateCsv'),
+  excelDropzone: document.getElementById('excelDropzone'),
+  excelFileInput: document.getElementById('excelFileInput'),
+  dropzoneFileInfo: document.getElementById('dropzoneFileInfo'),
+  dropzoneFileName: document.getElementById('dropzoneFileName'),
+  dropzoneFileSize: document.getElementById('dropzoneFileSize'),
+  btnRemoveExcelFile: document.getElementById('btnRemoveExcelFile'),
+  importPreviewSection: document.getElementById('importPreviewSection'),
+  previewCountLabel: document.getElementById('previewCountLabel'),
+  previewValidationBadge: document.getElementById('previewValidationBadge'),
+  importPreviewTbody: document.getElementById('importPreviewTbody'),
+  btnConfirmExcelImport: document.getElementById('btnConfirmExcelImport'),
+
   // Navigation Menu & Workflow Canvas
   tabBtnExams: document.getElementById('tabBtnExams'),
   tabBtnWorkflow: document.getElementById('tabBtnWorkflow'),
@@ -234,6 +252,7 @@ const DOM = {
 async function init() {
   loadExamsFromStorage();
   setupEventListeners();
+  setupExcelHandlers();
   setupCopilot();
   setupViewNavigation();
   updateEndpointLabels();
@@ -1653,6 +1672,487 @@ function setupViewNavigation() {
   if (DOM.tabBtnCopilotNav) {
     DOM.tabBtnCopilotNav.addEventListener('click', () => switchMainView('copilot'));
   }
+}
+
+// ==========================================
+// Excel Import & Export Engine
+// ==========================================
+let parsedImportRecords = [];
+
+function setupExcelHandlers() {
+  if (DOM.btnOpenImportModal) {
+    DOM.btnOpenImportModal.addEventListener('click', () => {
+      resetExcelImportModal();
+      openModal('modalImportExcel');
+    });
+  }
+
+  if (DOM.btnExportExcel) {
+    DOM.btnExportExcel.addEventListener('click', () => {
+      exportToExcel();
+    });
+  }
+
+  if (DOM.btnDownloadTemplateXlsx) {
+    DOM.btnDownloadTemplateXlsx.addEventListener('click', () => {
+      downloadExcelTemplate('xlsx');
+    });
+  }
+
+  if (DOM.btnDownloadTemplateCsv) {
+    DOM.btnDownloadTemplateCsv.addEventListener('click', () => {
+      downloadExcelTemplate('csv');
+    });
+  }
+
+  // Dropzone click & file picker
+  if (DOM.excelDropzone && DOM.excelFileInput) {
+    DOM.excelDropzone.addEventListener('click', (e) => {
+      if (e.target.closest('#btnRemoveExcelFile') || e.target === DOM.excelFileInput) return;
+      DOM.excelFileInput.click();
+    });
+
+    DOM.excelFileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleExcelFile(e.target.files[0]);
+      }
+    });
+
+    // Drag & drop support
+    ['dragenter', 'dragover'].forEach(eventName => {
+      DOM.excelDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        DOM.excelDropzone.classList.add('dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      DOM.excelDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        DOM.excelDropzone.classList.remove('dragover');
+      });
+    });
+
+    DOM.excelDropzone.addEventListener('drop', (e) => {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleExcelFile(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  if (DOM.btnRemoveExcelFile) {
+    DOM.btnRemoveExcelFile.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetExcelImportModal();
+    });
+  }
+
+  if (DOM.btnConfirmExcelImport) {
+    DOM.btnConfirmExcelImport.addEventListener('click', () => {
+      confirmExcelImport();
+    });
+  }
+}
+
+function resetExcelImportModal() {
+  if (DOM.excelFileInput) DOM.excelFileInput.value = '';
+  parsedImportRecords = [];
+  if (DOM.dropzoneFileInfo) DOM.dropzoneFileInfo.style.display = 'none';
+  if (DOM.importPreviewSection) DOM.importPreviewSection.style.display = 'none';
+  if (DOM.btnConfirmExcelImport) {
+    DOM.btnConfirmExcelImport.disabled = true;
+    DOM.btnConfirmExcelImport.innerHTML = `<i class="fa-solid fa-file-import"></i> <span>Confirm & Import Records</span>`;
+  }
+  const icon = DOM.excelDropzone?.querySelector('.dropzone-icon');
+  if (icon) icon.style.display = 'flex';
+  const title = DOM.excelDropzone?.querySelector('.dropzone-title');
+  if (title) title.style.display = 'block';
+  const subtitle = DOM.excelDropzone?.querySelector('.dropzone-subtitle');
+  if (subtitle) subtitle.style.display = 'block';
+}
+
+function handleExcelFile(file) {
+  if (!file) return;
+  const filename = file.name;
+  const ext = filename.split('.').pop().toLowerCase();
+
+  if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+    showToast('Please upload a valid Excel (.xlsx, .xls) or CSV file.', 'error');
+    return;
+  }
+
+  // Update Dropzone File Info
+  if (DOM.dropzoneFileName) DOM.dropzoneFileName.textContent = filename;
+  if (DOM.dropzoneFileSize) {
+    const sizeKB = (file.size / 1024).toFixed(1);
+    DOM.dropzoneFileSize.textContent = sizeKB > 1024 ? `${(sizeKB / 1024).toFixed(2)} MB` : `${sizeKB} KB`;
+  }
+  if (DOM.dropzoneFileInfo) DOM.dropzoneFileInfo.style.display = 'flex';
+  
+  const icon = DOM.excelDropzone?.querySelector('.dropzone-icon');
+  if (icon) icon.style.display = 'none';
+  const title = DOM.excelDropzone?.querySelector('.dropzone-title');
+  if (title) title.style.display = 'none';
+  const subtitle = DOM.excelDropzone?.querySelector('.dropzone-subtitle');
+  if (subtitle) subtitle.style.display = 'none';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      let rawRows = [];
+      if (window.XLSX) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheet];
+        rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+      } else if (ext === 'csv') {
+        const text = new TextDecoder().decode(e.target.result);
+        rawRows = parseCSVToObjects(text);
+      } else {
+        showToast('Excel library not loaded. Please try uploading a CSV file.', 'error');
+        resetExcelImportModal();
+        return;
+      }
+
+      if (!rawRows || rawRows.length === 0) {
+        showToast('No student records found in the uploaded file.', 'error');
+        resetExcelImportModal();
+        return;
+      }
+
+      processRawExcelRows(rawRows);
+    } catch (err) {
+      console.error('Failed to parse spreadsheet:', err);
+      showToast('Error parsing file: ' + err.message, 'error');
+      resetExcelImportModal();
+    }
+  };
+
+  reader.readAsArrayBuffer(file);
+}
+
+function processRawExcelRows(rows) {
+  parsedImportRecords = [];
+
+  rows.forEach((row, idx) => {
+    const getVal = (...keys) => {
+      for (const k of keys) {
+        for (const rowKey of Object.keys(row)) {
+          if (rowKey.trim().toLowerCase() === k.toLowerCase()) {
+            return String(row[rowKey]).trim();
+          }
+        }
+      }
+      return '';
+    };
+
+    const studentName = getVal('Student Name', 'student_name', 'Name', 'Student', 'Full Name') || `Student #${idx + 1}`;
+    const studentId = getVal('Student ID', 'student_id', 'ID', 'Roll No', 'Roll Number') || `STU-${Math.floor(100 + Math.random() * 900)}`;
+    const subject = getVal('Subject', 'Course', 'Topic') || 'General Assessment';
+    const examTitle = getVal('Exam Title', 'exam_title', 'Exam', 'Title', 'Assessment') || `${subject} Term Assessment`;
+    const examDate = getVal('Exam Date', 'exam_date', 'Date') || new Date().toISOString().split('T')[0];
+
+    const rawTotal = getVal('Total Marks', 'Max Marks', 'Total', 'Out of');
+    const totalMarks = rawTotal && !isNaN(parseFloat(rawTotal)) ? parseFloat(rawTotal) : 100;
+
+    const rawPassing = getVal('Passing Marks', 'Pass Mark', 'Pass Marks', 'Passing');
+    const passingMarks = rawPassing && !isNaN(parseFloat(rawPassing)) ? parseFloat(rawPassing) : Math.round(totalMarks * 0.4);
+
+    const rawMarks = getVal('Marks Obtained', 'Marks', 'Score', 'Obtained Marks', 'Mark');
+    let marksObtained = null;
+    let percentage = null;
+    let grade = null;
+    let passed = null;
+    let status = 'Scheduled';
+
+    if (rawMarks !== '' && !isNaN(parseFloat(rawMarks))) {
+      marksObtained = parseFloat(rawMarks);
+      percentage = Math.round((marksObtained / totalMarks) * 100);
+      grade = calculateGradeLetter(percentage);
+      passed = percentage >= Math.round((passingMarks / totalMarks) * 100);
+      status = 'Graded';
+    }
+
+    let feedback = getVal('Remarks', 'Feedback', 'Teacher Remarks', 'Notes');
+    if (!feedback && status === 'Graded') {
+      if (grade === 'A+') feedback = 'Outstanding academic excellence and comprehensive subject mastery.';
+      else if (grade === 'A') feedback = 'Demonstrated exceptional analytical depth and subject comprehension.';
+      else if (grade === 'B') feedback = 'Good performance with thorough understanding of core principles.';
+      else if (grade === 'C') feedback = 'Satisfactory grasp of fundamental curriculum concepts.';
+      else if (grade === 'D') feedback = 'Basic knowledge displayed. Targeted review recommended.';
+      else feedback = 'Scored below passing threshold. Remedial academic coaching recommended.';
+    } else if (!feedback) {
+      feedback = 'Scheduled in Student CRM. Assessment hall assignment pending.';
+    }
+
+    parsedImportRecords.push({
+      id: `EX-${Math.floor(1000 + Math.random() * 9000)}`,
+      studentId,
+      studentName,
+      subject,
+      examTitle,
+      examDate,
+      totalMarks,
+      passingMarks,
+      marksObtained,
+      percentage,
+      grade,
+      passed,
+      status,
+      feedback,
+      crmSyncStatus: 'SYNCED_TO_STUDENT_CRM',
+      createdAt: new Date().toISOString()
+    });
+  });
+
+  renderImportPreview(parsedImportRecords);
+}
+
+function renderImportPreview(records) {
+  if (!DOM.importPreviewTbody) return;
+
+  DOM.importPreviewTbody.innerHTML = records.map((r, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><strong>${escapeHtml(r.studentName)}</strong></td>
+      <td><span class="code-pill">${escapeHtml(r.studentId)}</span></td>
+      <td>${escapeHtml(r.subject)}</td>
+      <td>${escapeHtml(r.examTitle)}</td>
+      <td>${r.marksObtained !== null ? `<strong>${r.marksObtained}</strong>` : '<span style="color: #94a3b8;">--</span>'}</td>
+      <td>${r.totalMarks}</td>
+      <td>${r.grade ? `<span class="badge ${getGradeClass(r.grade)}">${r.grade}</span>` : '<span style="color: #94a3b8;">--</span>'}</td>
+      <td><span class="badge ${r.status === 'Graded' ? (r.passed ? 'badge-passed' : 'badge-failed') : 'badge-scheduled'}">${r.status}</span></td>
+    </tr>
+  `).join('');
+
+  if (DOM.previewCountLabel) {
+    DOM.previewCountLabel.textContent = `Preview Parsed Records (${records.length})`;
+  }
+  if (DOM.previewValidationBadge) {
+    DOM.previewValidationBadge.textContent = `${records.length} Valid Records`;
+    DOM.previewValidationBadge.classList.remove('has-warnings');
+  }
+  if (DOM.importPreviewSection) {
+    DOM.importPreviewSection.style.display = 'flex';
+  }
+  if (DOM.btnConfirmExcelImport) {
+    DOM.btnConfirmExcelImport.disabled = records.length === 0;
+    DOM.btnConfirmExcelImport.innerHTML = `<i class="fa-solid fa-file-import"></i> <span>Confirm & Import ${records.length} Records</span>`;
+  }
+}
+
+function confirmExcelImport() {
+  if (!parsedImportRecords || parsedImportRecords.length === 0) return;
+
+  const modeEl = document.querySelector('input[name="importMode"]:checked');
+  const mode = modeEl ? modeEl.value : 'append';
+
+  if (mode === 'replace') {
+    state.exams = [...parsedImportRecords];
+  } else {
+    const existingIds = new Set(state.exams.map(e => e.id));
+    parsedImportRecords.forEach(r => {
+      while (existingIds.has(r.id)) {
+        r.id = `EX-${Math.floor(1000 + Math.random() * 9000)}`;
+      }
+      existingIds.add(r.id);
+    });
+    state.exams = [...parsedImportRecords, ...state.exams];
+  }
+
+  saveExamsToStorage();
+  render();
+  closeModal('modalImportExcel');
+  showToast(`Successfully imported ${parsedImportRecords.length} student records into CRM!`, 'success');
+
+  if (typeof addLog === 'function') {
+    addLog('EXCEL_IMPORT', 'SUCCESS', `Imported ${parsedImportRecords.length} student records via Excel (${mode})`, {
+      recordsCount: parsedImportRecords.length,
+      mode
+    });
+  }
+}
+
+function downloadExcelTemplate(format = 'xlsx') {
+  const sampleRows = [
+    {
+      "Student Name": "Alex Rivera",
+      "Student ID": "STU-102",
+      "Subject": "Computer Science",
+      "Exam Title": "Algorithms & Complexity Midterm",
+      "Exam Date": "2026-09-20",
+      "Total Marks": 100,
+      "Passing Marks": 40,
+      "Marks Obtained": 88,
+      "Remarks": "Strong recursive decomposition and complexity proofs."
+    },
+    {
+      "Student Name": "Elena Rostov",
+      "Student ID": "STU-105",
+      "Subject": "Mathematics",
+      "Exam Title": "Linear Algebra Matrix Evaluation",
+      "Exam Date": "2026-09-22",
+      "Total Marks": 100,
+      "Passing Marks": 40,
+      "Marks Obtained": 95,
+      "Remarks": "Flawless eigenvalue calculations and geometric insight."
+    },
+    {
+      "Student Name": "Jordan Blake",
+      "Student ID": "STU-109",
+      "Subject": "Physics",
+      "Exam Title": "Classical Mechanics Term Assessment",
+      "Exam Date": "2026-09-25",
+      "Total Marks": 100,
+      "Passing Marks": 40,
+      "Marks Obtained": 36,
+      "Remarks": "Needs review on Lagrangian dynamics. Remedial scheduled."
+    },
+    {
+      "Student Name": "Priya Sharma",
+      "Student ID": "STU-114",
+      "Subject": "Chemistry",
+      "Exam Title": "Thermodynamics & Kinetics Final",
+      "Exam Date": "2026-09-28",
+      "Total Marks": 100,
+      "Passing Marks": 40,
+      "Marks Obtained": "",
+      "Remarks": "Exam scheduled for Auditorium 3."
+    }
+  ];
+
+  if (format === 'xlsx' && window.XLSX) {
+    const ws = XLSX.utils.json_to_sheet(sampleRows);
+    ws['!cols'] = [
+      { wch: 18 }, { wch: 14 }, { wch: 20 }, { wch: 34 },
+      { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 16 }, { wch: 45 }
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Students_Template");
+    XLSX.writeFile(wb, "EduPulse_Students_Template.xlsx");
+    showToast("Downloaded EduPulse_Students_Template.xlsx", "info");
+  } else {
+    downloadCSV(sampleRows, "EduPulse_Students_Template.csv");
+    showToast("Downloaded EduPulse_Students_Template.csv", "info");
+  }
+}
+
+function exportToExcel() {
+  if (!state.exams || state.exams.length === 0) {
+    showToast("No student records available to export.", "info");
+    return;
+  }
+
+  const exportRows = state.exams.map(e => ({
+    "Exam ID": e.id,
+    "Student ID": e.studentId,
+    "Student Name": e.studentName,
+    "Subject": e.subject,
+    "Exam Title": e.examTitle,
+    "Exam Date": e.examDate || '',
+    "Total Marks": e.totalMarks,
+    "Passing Marks": e.passingMarks,
+    "Marks Obtained": e.marksObtained !== null ? e.marksObtained : 'N/A',
+    "Percentage": e.percentage !== null ? `${e.percentage}%` : 'N/A',
+    "Grade": e.grade || 'N/A',
+    "Status": e.status,
+    "Result": e.passed === true ? 'Passed' : (e.passed === false ? 'Failed' : 'Pending'),
+    "Teacher Remarks": e.feedback || '',
+    "AI Evaluation": e.aiEvaluation || '',
+    "CRM Sync Status": e.crmSyncStatus || 'SYNCED_TO_STUDENT_CRM'
+  }));
+
+  if (window.XLSX) {
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 12 }, { wch: 18 }, { wch: 20 }, { wch: 32 },
+      { wch: 14 }, { wch: 12 }, { wch: 14 }, { wch: 15 }, { wch: 12 },
+      { wch: 8 }, { wch: 12 }, { wch: 10 }, { wch: 40 }, { wch: 40 }, { wch: 25 }
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Student_CRM_Exams");
+    XLSX.writeFile(wb, "EduPulse_Student_CRM_Export.xlsx");
+    showToast(`Exported ${exportRows.length} student records to EduPulse_Student_CRM_Export.xlsx`, "success");
+  } else {
+    downloadCSV(exportRows, "EduPulse_Student_CRM_Export.csv");
+    showToast(`Exported ${exportRows.length} student records to EduPulse_Student_CRM_Export.csv`, "success");
+  }
+
+  if (typeof addLog === 'function') {
+    addLog('EXCEL_EXPORT', 'SUCCESS', `Exported ${exportRows.length} student records to Excel spreadsheet`, {
+      count: exportRows.length
+    });
+  }
+}
+
+function downloadCSV(rows, filename) {
+  if (!rows || !rows.length) return;
+  const headers = Object.keys(rows[0]);
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => headers.map(h => {
+      let val = row[h] !== undefined && row[h] !== null ? String(row[h]) : '';
+      if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+        val = `"${val.replace(/"/g, '""')}"`;
+      }
+      return val;
+    }).join(','))
+  ].join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function parseCSVToObjects(text) {
+  const lines = text.split(/\r\n|\n/).filter(line => line.trim().length > 0);
+  if (lines.length < 2) return [];
+
+  function parseLine(line) {
+    const result = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && line[i + 1] === '"') {
+          cur += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        result.push(cur.trim());
+        cur = '';
+      } else {
+        cur += char;
+      }
+    }
+    result.push(cur.trim());
+    return result;
+  }
+
+  const headers = parseLine(lines[0]);
+  const objects = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = parseLine(lines[i]);
+    const obj = {};
+    headers.forEach((h, idx) => {
+      obj[h] = values[idx] !== undefined ? values[idx] : '';
+    });
+    objects.push(obj);
+  }
+  return objects;
 }
 
 // Start application
