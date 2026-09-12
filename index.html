@@ -30,40 +30,43 @@
         </div>
       </div>
 
-      <!-- CRM Database Status Pill -->
-      <div class="crm-connection-pill" id="crmConnectionPill" title="Connected to n8n Student CRM Database">
-        <i class="fa-solid fa-database"></i>
-        <span>CRM: <strong id="crmDbName">Student_CRM_Database</strong></span>
-        <span class="crm-status-dot connected" id="crmStatusDot"></span>
-      </div>
+      <!-- Integrated System Status Group -->
+      <div class="header-status-group">
+        <!-- CRM Database Status Pill -->
+        <div class="crm-connection-pill" id="crmConnectionPill" title="Connected to n8n Student CRM Database">
+          <i class="fa-solid fa-database"></i>
+          <span><strong id="crmDbName">Student_CRM_Database</strong></span>
+          <span class="crm-status-dot connected" id="crmStatusDot"></span>
+        </div>
 
-      <!-- n8n Webhook Status Pill -->
-      <div class="webhook-banner" id="webhookBanner">
-        <div class="status-indicator">
-          <span class="status-dot pulsing" id="statusDot"></span>
-          <span class="status-text" id="statusText">Checking n8n...</span>
+        <!-- n8n Webhook Status Pill -->
+        <div class="webhook-banner" id="webhookBanner">
+          <div class="status-indicator">
+            <span class="status-dot pulsing" id="statusDot"></span>
+            <span class="status-text" id="statusText">n8n Live</span>
+          </div>
+          <div class="webhook-endpoint-info" title="Current n8n Webhook Endpoint">
+            <i class="fa-solid fa-bolt"></i>
+            <span id="currentEndpointLabel">http://localhost:5678/webhook/student-exam</span>
+          </div>
+          <button class="btn btn-ghost btn-sm btn-icon" id="btnTestWebhook" title="Ping n8n Webhook">
+            <i class="fa-solid fa-rotate"></i>
+          </button>
+          <button class="btn btn-ghost btn-sm btn-icon" id="btnConfigWebhook" title="Webhook Settings">
+            <i class="fa-solid fa-gear"></i>
+          </button>
         </div>
-        <div class="webhook-endpoint-info">
-          <i class="fa-solid fa-bolt"></i>
-          <span id="currentEndpointLabel">http://localhost:5678/webhook/student-exam</span>
-        </div>
-        <button class="btn btn-ghost btn-sm" id="btnTestWebhook" title="Ping n8n Webhook">
-          <i class="fa-solid fa-rotate"></i> Ping n8n
-        </button>
-        <button class="btn btn-ghost btn-sm" id="btnConfigWebhook" title="Webhook Settings">
-          <i class="fa-solid fa-gear"></i>
-        </button>
       </div>
 
       <div class="nav-actions">
         <button class="btn btn-outline btn-sm" id="btnHeaderWorkflow" title="Open n8n Workflow Canvas">
           <i class="fa-solid fa-diagram-project"></i> <span class="hide-mobile">n8n Canvas</span>
         </button>
-        <button class="btn btn-secondary btn-sm" id="btnToggleConsole">
-          <i class="fa-solid fa-terminal"></i> <span class="hide-mobile">Webhook Console</span>
+        <button class="btn btn-secondary btn-sm" id="btnToggleConsole" title="View Webhook Activity Logs">
+          <i class="fa-solid fa-terminal"></i> <span class="hide-mobile">Console</span>
           <span class="console-counter" id="consoleCounter">0</span>
         </button>
-        <button class="btn btn-primary" id="btnOpenScheduleModal">
+        <button class="btn btn-primary btn-sm" id="btnOpenScheduleModal" title="Schedule and evaluate a new student exam">
           <i class="fa-solid fa-plus"></i> <span>Schedule Exam</span>
         </button>
       </div>
@@ -199,6 +202,8 @@
             </select>
           </div>
 
+          <div class="action-divider"></div>
+
           <!-- CRM Sync Actions -->
           <button class="btn btn-emerald btn-sm" id="btnSyncFromCRM" title="Pull latest records from Student CRM Database">
             <i class="fa-solid fa-cloud-arrow-down"></i> <span class="hide-tablet">Sync from CRM</span>
@@ -218,7 +223,10 @@
       <section class="table-container-card">
         <div class="table-header-bar">
           <div class="table-title">
-            <h1 class="heading-title">Student Exam Management</h1>
+            <div>
+              <h1 class="heading-title">Student Exam Management</h1>
+              <p class="heading-subtitle">Real-time academic records, automated AI grading, and CRM sync status</p>
+            </div>
             <span class="count-pill" id="tableItemCount">0 records</span>
           </div>
 
