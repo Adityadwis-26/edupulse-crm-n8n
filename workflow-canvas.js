@@ -1402,6 +1402,13 @@
       this.applyTransform();
     },
 
+    pan(dx, dy) {
+      state.panX += dx;
+      state.panY += dy;
+      this.applyTransform();
+      this.updateCablePaths();
+    },
+
     applyTransform() {
       if (el.transformContainer) {
         el.transformContainer.style.transform = `translate(${state.panX}px, ${state.panY}px) scale(${state.scale})`;
@@ -1436,7 +1443,16 @@
       btnCloseInspector: document.getElementById('btnCloseInspector'),
       telemetryBanner: document.getElementById('canvasTelemetryBanner'),
       liveFlowIndicator: document.getElementById('liveFlowIndicator'),
-      liveFlowStatusText: document.getElementById('liveFlowStatusText')
+      liveFlowStatusText: document.getElementById('liveFlowStatusText'),
+
+      // Navigation & Zoom Controller Pad (Image 2)
+      padPanUp: document.getElementById('padPanUp'),
+      padPanDown: document.getElementById('padPanDown'),
+      padPanLeft: document.getElementById('padPanLeft'),
+      padPanRight: document.getElementById('padPanRight'),
+      padReset: document.getElementById('padReset'),
+      padZoomIn: document.getElementById('padZoomIn'),
+      padZoomOut: document.getElementById('padZoomOut')
     };
   }
 
@@ -1473,11 +1489,20 @@
       });
     }
 
-    // Zoom buttons
+    // Zoom buttons in toolbar
     if (el.btnZoomIn) el.btnZoomIn.addEventListener('click', () => WorkflowCanvas.zoomIn());
     if (el.btnZoomOut) el.btnZoomOut.addEventListener('click', () => WorkflowCanvas.zoomOut());
     if (el.btnZoomReset) el.btnZoomReset.addEventListener('click', () => WorkflowCanvas.zoomReset());
     if (el.btnFitView) el.btnFitView.addEventListener('click', () => WorkflowCanvas.fitToView());
+
+    // Floating Navigation & Zoom Controller Pad (Image 2)
+    if (el.padPanUp) el.padPanUp.addEventListener('click', () => WorkflowCanvas.pan(0, 80));
+    if (el.padPanDown) el.padPanDown.addEventListener('click', () => WorkflowCanvas.pan(0, -80));
+    if (el.padPanLeft) el.padPanLeft.addEventListener('click', () => WorkflowCanvas.pan(80, 0));
+    if (el.padPanRight) el.padPanRight.addEventListener('click', () => WorkflowCanvas.pan(-80, 0));
+    if (el.padReset) el.padReset.addEventListener('click', () => WorkflowCanvas.fitToView());
+    if (el.padZoomIn) el.padZoomIn.addEventListener('click', () => WorkflowCanvas.zoomIn());
+    if (el.padZoomOut) el.padZoomOut.addEventListener('click', () => WorkflowCanvas.zoomOut());
 
     // Inspector toggle
     if (el.btnToggleInspector) {
