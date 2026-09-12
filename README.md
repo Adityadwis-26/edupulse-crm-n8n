@@ -24,6 +24,7 @@ An enterprise-grade **Student Exam Management CRM Dashboard** connected directly
 ## 🚀 Key Features
 
 - ⚡ **Direct n8n Webhook Integration**: Real-time bi-directional sync between the CRM client and the n8n automation engine (`POST /webhook/student-exam`).
+- 📊 **Excel Batch Import & Export**: Import student exams from `.xlsx`, `.xls`, or `.csv` files with intelligent auto-grading, live preview, downloadable starter templates, and one-click export to Excel.
 - 🤖 **Google Gemini 2.5 Flash AI Copilot**: Slide-out copilot assistant with sub-second (<0.34s) pedagogical evaluation, student queries, and remedial intervention alerts.
 - 🗄️ **Integrated Student CRM Database**: Native state synchronization with n8n Data Tables (`Student_CRM_Database`), tracking student IDs, marks, grades, passing thresholds, and AI notes.
 - 📊 **Real-Time KPI Telemetry**: Instant overview metrics for Total Exams, Scheduled vs Graded count, Class Average %, Pass Rate %, and Top Student Performer.
@@ -37,48 +38,48 @@ An enterprise-grade **Student Exam Management CRM Dashboard** connected directly
 
 ```mermaid
 flowchart TD
-    subgraph Client ["EduPulse CRM Client (Port 3000)"]
+    subgraph Client ["EduPulse CRM Client"]
         UI["Table & Grid Views"]
         Copilot["Gemini AI Copilot Drawer"]
         ReportModal["Official Transcript Modal"]
         Logger["Live Webhook Activity Console"]
+        Excel["Excel Import & Export Engine"]
     end
 
-    subgraph N8N ["n8n Workflow Engine (Port 5678)"]
+    subgraph N8N ["n8n Workflow Engine"]
         Webhook["POST /webhook/student-exam"]
         Dispatcher["Slack / Notification Dispatcher"]
         Router["Action & Routing Engine"]
-        
-        subgraph AI_Hub ["AI Agent & Intelligence Hub"]
-            Gemini["Google Gemini 2.5 Flash<br/>Chat & Tool Models"]
-            Memory["Buffer Window Memory"]
-            Calculator["Calculator Tool"]
-            VectorStore["Exam Rubrics Vector Store<br/>Gemini Embeddings"]
-        end
-
-        subgraph CRM_Storage ["n8n Database"]
-            CRM_DB[("Student_CRM_Database<br/>Data Table")]
-        end
-
-        Decider{"Check Pass or Remedial?"}
+        Decider{"Pass or Remedial?"}
         Merit["Honor Roll Distinction"]
         Remedial["Remedial Workshop Assigned"]
-        Responder["Respond to Webhook (JSON)"]
+        Responder["Respond to Webhook"]
     end
 
-    UI -->|sync_to_crm or fetch_crm| Webhook
-    Copilot -->|action: ai_chat| Webhook
+    subgraph AI_Hub ["Google Gemini AI Pipeline"]
+        Gemini["Google Gemini 2.5 Flash"]
+        Memory["Buffer Window Memory"]
+        Calculator["Calculator Tool"]
+        VectorStore["Exam Rubrics Vector Store"]
+    end
+
+    subgraph CRM_Storage ["n8n CRM Storage"]
+        CRM_DB[("Student_CRM_Database")]
+    end
+
+    UI --> Webhook
+    Copilot --> Webhook
     Webhook --> Dispatcher
     Webhook --> Router
     Router --> Gemini
     Router --> CRM_DB
     Gemini --> Decider
-    Decider -->|Passed: 40% and above| Merit
-    Decider -->|Failed: Below 40%| Remedial
+    Decider -->|Pass 40%+| Merit
+    Decider -->|Fail below 40%| Remedial
     Merit --> Responder
     Remedial --> Responder
-    Responder -->|HTTP 200 JSON Response| UI
-    Responder -->|Live Activity Stream| Logger
+    Responder --> UI
+    Responder --> Logger
 ```
 
 ---
