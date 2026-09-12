@@ -215,6 +215,15 @@ const DOM = {
   copilotInput: document.getElementById('copilotInput'),
   btnSendCopilot: document.getElementById('btnSendCopilot'),
 
+  // Navigation Menu & Workflow Canvas
+  tabBtnExams: document.getElementById('tabBtnExams'),
+  tabBtnWorkflow: document.getElementById('tabBtnWorkflow'),
+  tabBtnCopilotNav: document.getElementById('tabBtnCopilotNav'),
+  btnHeaderWorkflow: document.getElementById('btnHeaderWorkflow'),
+  mainContainer: document.getElementById('mainContainer'),
+  workflowViewContainer: document.getElementById('workflowViewContainer'),
+  navExamCount: document.getElementById('navExamCount'),
+
   // Toast
   toastContainer: document.getElementById('toastContainer')
 };
@@ -226,8 +235,13 @@ async function init() {
   loadExamsFromStorage();
   setupEventListeners();
   setupCopilot();
+  setupViewNavigation();
   updateEndpointLabels();
   render();
+
+  if (window.WorkflowCanvas) {
+    window.WorkflowCanvas.init();
+  }
   
   // Ping webhook and attempt CRM database sync on startup
   const pingOk = await pingWebhook(true);
@@ -270,6 +284,11 @@ async function callN8nWebhook(payload, isSilent = false) {
     ...payload,
     ...(geminiKey ? { geminiApiKey: geminiKey } : {})
   };
+
+  // Synchronize execution onto n8n Workflow Canvas
+  if (window.WorkflowCanvas && !isSilent) {
+    window.WorkflowCanvas.triggerFromCRM(payload.action, payload);
+  }
 
   try {
     const response = await fetch(state.webhookUrl, {
@@ -466,6 +485,7 @@ function updateKPIs() {
   DOM.valTotalExams.textContent = total;
   DOM.valScheduledCount.textContent = `${scheduled} Scheduled`;
   DOM.valGradedCount.textContent = `${graded.length} Graded`;
+  if (DOM.navExamCount) DOM.navExamCount.textContent = total;
 
   if (graded.length > 0) {
     const avg = graded.reduce((acc, e) => acc + Number(e.percentage || 0), 0) / graded.length;
@@ -1358,6 +1378,51 @@ function appendChatLoading(id) {
 function removeChatLoading(id) {
   const el = document.getElementById(id);
   if (el) el.remove();
+}
+
+// ==========================================
+// View Navigation (Menu Tabs & Canvas Switcher)
+// ==========================================
+function setupViewNavigation() {
+  function switchMainView(viewName) {
+    if (viewName === 'exams') {
+      if (DOM.mainContainer) DOM.mainContainer.style.display = 'flex';
+      if (DOM.workflowViewContainer) DOM.workflowViewContainer.style.display = 'none';
+      if (DOM.tabBtnExams) DOM.tabBtnExams.classList.add('active');
+      if (DOM.tabBtnWorkflow) DOM.tabBtnWorkflow.classList.remove('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (viewName === 'workflow') {
+      if (DOM.mainContainer) DOM.mainContainer.style.display = 'none';
+      if (DOM.workflowViewContainer) DOM.workflowViewContainer.style.display = 'flex';
+      if (DOM.tabBtnExams) DOM.tabBtnExams.classList.remove('active');
+      if (DOM.tabBtnWorkflow) DOM.tabBtnWorkflow.classList.add('active');
+      if (window.WorkflowCanvas) {
+        window.WorkflowCanvas.fitToView();
+        window.WorkflowCanvas.updateCablePaths();
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (viewName === 'copilot') {
+      if (DOM.copilotDrawer) {
+        DOM.copilotDrawer.classList.add('open');
+        if (DOM.copilotInput) DOM.copilotInput.focus();
+      }
+    }
+  }
+
+  window.switchMainView = switchMainView;
+
+  if (DOM.tabBtnExams) {
+    DOM.tabBtnExams.addEventListener('click', () => switchMainView('exams'));
+  }
+  if (DOM.tabBtnWorkflow) {
+    DOM.tabBtnWorkflow.addEventListener('click', () => switchMainView('workflow'));
+  }
+  if (DOM.btnHeaderWorkflow) {
+    DOM.btnHeaderWorkflow.addEventListener('click', () => switchMainView('workflow'));
+  }
+  if (DOM.tabBtnCopilotNav) {
+    DOM.tabBtnCopilotNav.addEventListener('click', () => switchMainView('copilot'));
+  }
 }
 
 // Start application
