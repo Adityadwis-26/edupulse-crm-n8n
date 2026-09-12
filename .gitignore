@@ -16,3 +16,5 @@ yarn-debug.log*
 # Editor directories
 .vscode/
 .idea/
+
+.vercel
